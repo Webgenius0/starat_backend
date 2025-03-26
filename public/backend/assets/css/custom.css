@@ -1,0 +1,7 @@
+#country-code {
+    width: 80px;
+}
+
+#phone-floating {
+    width: calc(80% - 90px);
+}
