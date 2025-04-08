@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class OtpNotification extends Notification 
+class OtpNotification extends Notification
 {
     use Queueable;
 
@@ -26,10 +26,10 @@ class OtpNotification extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-                    ->line('Your One-Time Password (OTP) is:')
-                    ->line($this->otp)
-                    ->line('This OTP will expire in 15 minutes.')
-                    ->line('Thank you for using our application!');
+            ->line('Your One-Time Password (OTP) is:')
+            ->line($this->otp)
+            ->line('This OTP will expire in 15 minutes.')
+            ->line('Thank you for using our application!');
     }
 
     public function toArray($notifiable)

@@ -2,15 +2,16 @@
 
 use App\Http\Controllers\API\BlockUserController;
 use App\Http\Controllers\API\category\CategoryController;
-use App\Http\Controllers\Api\CommentController;
-use App\Http\Controllers\Api\LikeController;
+use App\Http\Controllers\API\CommentController;
+use App\Http\Controllers\API\HobbyController;
+use App\Http\Controllers\API\LikeController;
 use App\Http\Controllers\API\MessagingController;
-use App\Http\Controllers\Api\NotificationController;
-use App\Http\Controllers\Api\PostController;
+use App\Http\Controllers\API\NotificationController;
+use App\Http\Controllers\API\PostController;
 use App\Http\Controllers\API\RemainderController;
 use App\Http\Controllers\API\ReportUserController;
 use App\Http\Controllers\API\SocialmediaController;
-use App\Http\Controllers\Api\StoryController;
+use App\Http\Controllers\API\StoryController;
 use App\Http\Controllers\API\UserAuthController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\VideoUploadController;
@@ -29,7 +30,7 @@ Route::controller(UserAuthController::class)->group(function () {
 
     // Forget Password
     Route::post('forget-password', 'forgetPassword');
-    Route::post('verify-otp-password', 'varifyOtpWithOutAuth');
+    Route::post('verify-otp', 'checkOTP');
     Route::post('reset-password', 'resetPassword');
 
     // Google Login
@@ -52,10 +53,16 @@ Route::group(['middleware' => ['jwt.verify','user']], function () {
         Route::get('get/{id}', 'index');
     });
 
+    // All hobby route
+    Route::controller(HobbyController::class)->prefix('hobby')->group(function () {
+        Route::get('get', 'get');
+        Route::post('store', 'store');
+    });
+
     // All comment route
     Route::controller(CommentController::class)->prefix('comment')->group(function () {
         Route::post('store', 'store');
-        Route::get('get/{id}', 'index');
+        Route::get('get', 'index');
     });
 
     // All Wishlist route

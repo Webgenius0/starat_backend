@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Helper\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Notifications\OtpNotification;
 use App\Traits\apiresponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -50,6 +51,7 @@ class UserAuthController extends Controller
             $validated['password'] = bcrypt($validated['password']);
             $validated['otp'] = $this->generateOtp();
             $user = User::create($validated);
+            $user->notify(new OtpNotification($validated['otp']));
             DB::commit();
             return $this->success($user->only('id', 'username', 'email', 'phone', 'name'), 'User created successfully. Please check your email for verification.', 200);
 
@@ -127,9 +129,13 @@ class UserAuthController extends Controller
             return $this->error([], 'User not found', 404);
         }
 
-        $this->generateOtp();
+        $otp = $this->generateOtp();
+        $user->notify(new OtpNotification($otp));
+        $user->otp = $otp;
+        $user->is_varified = false;
+        $user->save();
 
-        return $this->success([], 'Check Your Email for Password Reset Otp', 200);
+        return $this->success(['otp', $otp], 'Check Your Email for Password Reset Otp', 200);
     }
 
     /**
@@ -151,25 +157,26 @@ class UserAuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user->otp || !Hash::check($request->otp, $user->otp)) {
+        // Check if the OTP is valid
+        if (!$user->otp || !$request->otp == $user->otp) {
             return response()->json([
-                'message' => 'Invalid OTP!',
+                'message' => 'Invalid OTP.',
             ], 400);
         }
 
-        if ($user->otp_created_at && now()->gt(Carbon::parse($user->otp_created_at)->addMinutes(15))) {
+        // Check if the OTP has expired
+        if (Carbon::now()->gt(Carbon::parse($user->otp_expiry))) {
             return response()->json([
                 'message' => 'OTP has expired.',
             ], 400);
         }
 
+        // Proceed to reset the password
         $user->password = Hash::make($request->password);
         $user->otp = null;
-        $user->otp_created_at = null;
+        $user->otp_expiry = null;
         $user->save();
-
-        return response()->json(['message' => 'Password reset successfully.'], 200);
-
+        return $this->success([], 'Password reset successfully.', 200);
     }
 
     // Resend Otp
@@ -194,30 +201,30 @@ class UserAuthController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function varifyOtpWithOutAuth(Request $request)
+    public function checkOTP(Request $request)
     {
-        // Validate the incoming request data
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email|exists:users,email',
-            'otp' => 'required|numeric',
+            'email' => 'required|email',
+            'otp' => 'required|digits:5',
         ]);
-
         if ($validator->fails()) {
-            return response()->json([
-                'errors' => $validator->errors(),
-            ], 400);
+            return $this->error([], $validator->errors()->first(), 422);
         }
+
         $user = User::where('email', $request->email)->first();
-        if ($user && $user->is_verified) {
-            return $this->success([], 'OTP has already been verified.', 200);
+
+        // Check if OTP is null or expired
+        if (!$user->otp || !$user->otp_expiry || Carbon::now()->greaterThan($user->otp_expiry)) {
+            return $this->error([], 'OTP has expired or is not set.', 400);
         }
-        if ($user && $user->otp === $request->otp) {
-            $user->is_varified = true;
-            $user->otp = null;
-            $user->save();
-            return $this->success(['token'=>JWTAuth::fromUser($user)], 'OTP verified successfully.', 200);
+
+        // Check if OTP matches
+        if ($user->otp != $request->otp) {
+            return $this->error([], 'Invalid OTP.', 400);
         }
-        return $this->error([], 'Invalid OTP.', 400);
+
+
+        return $this->success([], 'OTP validated successfully. Your account is now verified.', 200);
     }
 
 

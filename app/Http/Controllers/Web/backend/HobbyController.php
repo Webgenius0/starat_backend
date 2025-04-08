@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Hobby;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Str;
 

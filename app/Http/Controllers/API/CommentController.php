@@ -14,21 +14,27 @@ use Illuminate\Support\Facades\Validator;
 class CommentController extends Controller
 {
     use apiresponse;
-    public function index($id)
+    public function index(Request $request)
     {
-        $post = Post::with('comments')->find($id);
+        $query = Comment::query();
+        if ($request->type == 'post') {
+            $query->where('commentable_type', Post::class);
+        } elseif ($request->type == 'reel') {
+            $query->where('commentable_type', Reel::class);
+        }
+        $comments = $query->where('user_id', auth()->user()->id)->get();
 
-        return $this->success($post, 'Comment fetch successfully!', 200);
+        return $this->success($comments, 'Comments fetched successfully!', 200);
     }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required|exists:users,id',
             'comment' => 'required|string',
             'commentable_id' => 'required|integer',
             'commentable_type' => 'required|in:post,reel',
         ]);
-        
+
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
@@ -41,7 +47,7 @@ class CommentController extends Controller
         $model = $request->commentable_type === 'post' ? Post::class : Reel::class;
 
         $comment = Comment::create([
-            'user_id' => $request->user_id,
+            'user_id' => auth()->user()->id,
             'body' => $request->comment,
             'commentable_id' => $request->commentable_id,
             'commentable_type' => $model,

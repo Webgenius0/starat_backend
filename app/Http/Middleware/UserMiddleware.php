@@ -23,7 +23,7 @@ class UserMiddleware
             return $this->error([], 'You are not authorized to access this route.', 401);
         }
         if ($user->is_varified == false) {
-            return $this->error([], 'You are not varifiyed', 401);
+            return $this->error([], 'This account not verified', 401);
         }
 
         return $next($request);

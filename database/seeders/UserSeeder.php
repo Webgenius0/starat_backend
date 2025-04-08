@@ -20,6 +20,7 @@ class UserSeeder extends Seeder
             'email' => 'admin@admin.com',
             'password' => Hash::make('12345678'),
             'is_admin' => true,
+            'is_varified' => true
         ]);
 
         User::create([
@@ -27,6 +28,7 @@ class UserSeeder extends Seeder
             'username' => 'user',
             'email' => 'user@user.com',
             'password' => Hash::make('12345678'),
+            'is_varified' => true
         ]);
     }
 }

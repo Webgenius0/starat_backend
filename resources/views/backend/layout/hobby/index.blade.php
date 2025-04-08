@@ -1,6 +1,6 @@
 @extends('backend.app')
 
-@section('title', 'Brand Page')
+@section('title', 'Hobby Page')
 
 @push('style')
     <link href="//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" rel="stylesheet" />
@@ -52,9 +52,9 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-lg-4">
+                                {{-- <div class="col-lg-4"> --}}
 
-                                    <div class="row mb-2">
+                                    {{-- <div class="row mb-2">
                                         <label for="inputEmail3" class="col-3 col-form-label">Image <span
                                                 class="text-danger">(55 x 65)</span></label>
                                         <div class="col-9">
@@ -64,8 +64,8 @@
                                                 class="form-control-sm" type="file" name="image">
 
                                         </div>
-                                    </div>
-                                </div>
+                                    </div> --}}
+                                {{-- </div> --}}
                                 <div class="col-lg-12">
                                     <div class="text-end">
                                         <button type="submit" class="btn btn-sm btn-primary">Create</button>
@@ -127,7 +127,7 @@
             <div class="col-lg-12 mb-1">
                 <div class="card">
                     <div class="card-header">
-                        <h4 class="m-0">Brand List</h4>
+                        <h4 class="m-0">Hobby List</h4>
                     </div>
                     <div class="card-body">
                         <table id="data-table" class="table dt-responsive nowrap w-100">

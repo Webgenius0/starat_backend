@@ -6,6 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Hobby extends Model
 {
-    protected $fillable = ['name','priority','status','status'];
+    protected $fillable = ['name','priority','slug','status','status'];
 
 }
