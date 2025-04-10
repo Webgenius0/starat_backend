@@ -54,7 +54,6 @@ class UserAuthController extends Controller
             $user->notify(new OtpNotification($validated['otp']));
             DB::commit();
             return $this->success($user->only('id', 'username', 'email', 'phone', 'name'), 'User created successfully. Please check your email for verification.', 200);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return $this->error([], $e->getMessage(), 400);
@@ -205,7 +204,7 @@ class UserAuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
-            'otp' => 'required|digits:5',
+            'otp' => 'required|digits:6',
         ]);
         if ($validator->fails()) {
             return $this->error([], $validator->errors()->first(), 422);
@@ -213,18 +212,23 @@ class UserAuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        // Check if OTP is null or expired
-        if (!$user->otp || !$user->otp_expiry || Carbon::now()->greaterThan($user->otp_expiry)) {
-            return $this->error([], 'OTP has expired or is not set.', 400);
-        }
+        // // Check if OTP is null or expired
+        // if (!$user->otp || !$user->otp_expiry || Carbon::now()->greaterThan($user->otp_expiry)) {
+        //     return $this->error([], 'OTP has expired or is not set.', 400);
+        // }
 
         // Check if OTP matches
         if ($user->otp != $request->otp) {
             return $this->error([], 'Invalid OTP.', 400);
         }
 
+        $user->is_varified = true;
+        $user->otp = null;
+        $user->save();
 
-        return $this->success([], 'OTP validated successfully. Your account is now verified.', 200);
+        $token = JWTAuth::fromUser($user);
+
+        return $this->success($token, 'OTP validated successfully. Your account is now verified.', 200);
     }
 
 
