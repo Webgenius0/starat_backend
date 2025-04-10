@@ -18,15 +18,17 @@ class StoryController extends Controller
 
     public function followerStory()
     {
-        $story = Follow::where('follower_id', auth()->user()->id)->get()->pluck('user_id');
+        $story = Follow::where('follower_id', auth()->user()->id)->pluck('user_id');
 
         $data = User::whereIn('id', $story)
+            ->whereHas('story') // Exclude users without stories
             ->with(['story' => function ($query) {
-                $query->latest()->take(1);
+                $query->latest()->take(1); // Fetch latest story only
             }])
-            ->select('id', 'name')->get();
+            ->select('id', 'name')
+            ->get();
 
-        return $this->success($data, 'Data Fetch Succesfully!', 200);
+        return $this->success($data, 'Data Fetched Successfully!', 200);
     }
 
     public function store(Request $request)
