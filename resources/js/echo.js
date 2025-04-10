@@ -12,3 +12,8 @@ window.Echo = new Echo({
     forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
     enabledTransports: ['ws', 'wss'],
 });
+
+// window.Echo.private(`chat-room.${chatRoomId}`)
+//     .listen('.message.sent', (e) => {
+//         console.log("New message received:", e.message);
+//     });

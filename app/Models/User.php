@@ -5,14 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Namu\WireChat\Traits\Chatable;
 use Spatie\Permission\Traits\HasRoles;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Database\Eloquent\Collection;
 
 class User extends Authenticatable implements JWTSubject
 {
 
     use Notifiable;
     use HasRoles;
+    use Chatable;
 
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -79,5 +82,38 @@ class User extends Authenticatable implements JWTSubject
         return []; // Add any custom claims here
     }
 
+    public function canCreateChats(): bool
+    {
+        return $this->hasVerifiedEmail();
+    }
 
+
+    public function canCreateGroups(): bool
+    {
+        return $this->hasVerifiedEmail() === true;
+    }
+
+    public function searchChatables(string $query): ?Collection
+    {
+        $searchableFields = ['name'];
+        return User::where(function ($queryBuilder) use ($searchableFields, $query) {
+            foreach ($searchableFields as $field) {
+                $queryBuilder->orWhere($field, 'LIKE', '%' . $query . '%');
+            }
+        })
+            ->limit(20)
+            ->get();
+    }
+
+    //backend
+    public function reportuser()
+    {
+        return $this->hasMany(ReportUser::class, 'reported_user_id');
+    }
+
+    //block users
+    public function blockuser()
+    {
+        return $this->hasMany(BlockUser::class, 'blocked_user_id');
+    }
 }

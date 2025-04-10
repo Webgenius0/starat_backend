@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\BlockUserController;
 use App\Http\Controllers\API\category\CategoryController;
+use App\Http\Controllers\API\ChatController;
 use App\Http\Controllers\API\CommentController;
 use App\Http\Controllers\API\HobbyController;
 use App\Http\Controllers\API\LikeController;
@@ -37,7 +38,7 @@ Route::controller(UserAuthController::class)->group(function () {
     Route::post('google/login', 'googleLogin');
 });
 
-Route::group(['middleware' => ['jwt.verify','user']], function () {
+Route::group(['middleware' => ['jwt.verify', 'user']], function () {
     Route::post('logout', [UserAuthController::class, 'logout']);
     Route::get('me', [UserAuthController::class, 'me']);
     Route::post('refresh', [UserAuthController::class, 'refresh']);
@@ -84,6 +85,17 @@ Route::group(['middleware' => ['jwt.verify','user']], function () {
         Route::get('react/{id}', 'react');
     });
 
+    // All Chat route
+    Route::controller(ChatController::class)->group(function () {
+        // Route::post('/chat', 'createChat');
+        Route::post('/chat/message', 'sendMessage');
+        Route::get('/chat/get/messages', 'getConversations');
+        Route::post('/chat/group/create', 'groupCreate');
+        Route::get('/chat/get', 'getConversations');
+        Route::get('/chat/user/covesation/{user}', 'getUserConversation');
+    });
+
+
 
     // Get Notifications
     Route::get('/my-notifications', [UserController::class, 'getMyNotifications']);
@@ -107,12 +119,8 @@ Route::group(['middleware' => ['jwt.verify','user']], function () {
 
         return $response = ['success' => true, 'message' => 'Notification sent successfully'];
     });
-
 });
 
 Route::post('/save-fcm-token', [NotificationController::class, 'storeFcmToken']);
 Route::post('/send-notification', [NotificationController::class, 'sendNotification']);
 Route::get('/notifications/{user_id}', [NotificationController::class, 'getUserNotifications']);
-
-
-

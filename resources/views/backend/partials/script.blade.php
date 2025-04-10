@@ -1,7 +1,7 @@
 <button class="btn btn-primary btn-icon scroll-top" type="button"><i data-feather="arrow-up"></i></button>
 <!-- END: Footer-->
 
-
+@vite('resources/js/app.js')
 <!-- BEGIN: Vendor JS-->
 <script src="{{ asset('backend/app-assets/vendors/js/vendors.min.js') }}"></script>
 <!-- BEGIN Vendor JS-->

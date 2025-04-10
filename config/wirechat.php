@@ -42,7 +42,17 @@ return [
     'routes' => [
         'prefix' => '/chats',
         'middleware' => ['web', 'auth'],
+        'guards' => ['web'],
     ],
+
+    /**
+     * Layout:
+     * Specifies the view that will be used as the layout when rendering Wirechat components
+     * via the default routes (e.g., /chats and /chats/{id}).
+     * The returned view will serve as the parent layout, where the component content
+     * will be rendered into the $slot.
+     */
+    'layout' => 'wirechat::layouts.app',
 
     /**
      * Features:
@@ -53,6 +63,16 @@ return [
     'allow_chats_search' => true,
     'allow_media_attachments' => true,
     'allow_file_attachments' => true,
+
+    /**
+     * --------------------------------------------
+     * Notifications:
+     * --------------------------------------------
+     */
+    'notifications' => [
+        'enabled' => true,
+        'main_sw_script' => 'sw.js',  // Path to the main service worker,usually in the public root folder
+    ],
 
     /**
      * User Searchable Fields:

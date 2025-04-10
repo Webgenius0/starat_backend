@@ -1,3 +1,4 @@
+@vite('resources/css/app.css')
 <link rel="apple-touch-icon" href="{{ asset($setting->admin_favicon ??'') }}">
 <link rel="shortcut icon" type="image/x-icon" href="{{ asset($setting->admin_favicon ??'') }}">
 
