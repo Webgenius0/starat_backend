@@ -8,6 +8,15 @@ class Post extends Model
 {
     protected $fillable = ['title', 'description', 'user_id', 'file_url'];
 
+    public function getFileUrlAttribute($value)
+    {
+        return $value ? url($value) : null;
+    }
+
+    public function tags()
+    {
+        return $this->hasMany(Tag::class,'post_id');
+    }
     public function comments()
     {
         return $this->morphMany(Comment::class, 'commentable');
@@ -23,5 +32,8 @@ class Post extends Model
         return $this->morphMany(Like::class, 'likeable');
     }
 
-
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

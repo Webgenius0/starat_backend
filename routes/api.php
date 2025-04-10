@@ -4,6 +4,7 @@ use App\Http\Controllers\API\BlockUserController;
 use App\Http\Controllers\API\category\CategoryController;
 use App\Http\Controllers\API\ChatController;
 use App\Http\Controllers\API\CommentController;
+use App\Http\Controllers\API\FollowController;
 use App\Http\Controllers\API\HobbyController;
 use App\Http\Controllers\API\LikeController;
 use App\Http\Controllers\API\MessagingController;
@@ -51,6 +52,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
     // All post route
     Route::controller(PostController::class)->prefix('post')->group(function () {
         Route::post('store', 'store');
+        Route::get('foryou', 'forYou');
         Route::get('get/{id}', 'index');
     });
 
@@ -78,10 +80,26 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         Route::get('get', 'index');
     });
 
+    // All Followers
+    Route::controller(FollowController::class)->prefix('follow')->group(function () {
+        Route::post('store', 'store');
+        Route::get('how', 'whoToFollow');
+        Route::get('post', 'post');
+        Route::get('get', 'index');
+    });
+
+     // All Followers
+    //  Route::controller(FollowController::class)->prefix('follow')->group(function () {
+    //     Route::post('store', 'store');
+    //     Route::get('get', 'index');
+    // });
+
     // All story route
     Route::controller(StoryController::class)->prefix('story')->group(function () {
         Route::post('store', 'store');
         Route::get('get', 'index');
+        // home all followe story
+        Route::get('followers', 'followerStory');
         Route::get('react/{id}', 'react');
     });
 

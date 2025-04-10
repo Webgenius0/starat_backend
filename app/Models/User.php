@@ -48,6 +48,11 @@ class User extends Authenticatable implements JWTSubject
         'remember_token',
     ];
 
+    public function getAvatarAttribute($value)
+    {
+        return $value ? url($value) : null;
+    }
+
     public function comments()
     {
         return $this->hasMany(Comment::class, 'user_id');
@@ -115,5 +120,21 @@ class User extends Authenticatable implements JWTSubject
     public function blockuser()
     {
         return $this->hasMany(BlockUser::class, 'blocked_user_id');
+    }
+
+    public function followers()
+    {
+        return $this->hasMany(Follow::class, 'user_id');
+    }
+
+    // The users that the authenticated user follows
+    public function following()
+    {
+        return $this->hasMany(Follow::class, 'follower_id');
+    }
+
+    public function story()
+    {
+        return $this->hasMany(Story::class,'user_id');
     }
 }

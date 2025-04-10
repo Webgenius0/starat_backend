@@ -30,5 +30,13 @@ class UserSeeder extends Seeder
             'password' => Hash::make('12345678'),
             'is_varified' => true
         ]);
+
+        User::create([
+            'name' => 'test',
+            'username' => 'test',
+            'email' => 'test@test.com',
+            'password' => Hash::make('12345678'),
+            'is_varified' => true
+        ]);
     }
 }

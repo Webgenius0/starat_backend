@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Helper\Helper;
 use App\Http\Controllers\Controller;
+use App\Models\Follow;
 use App\Models\Story;
 use App\Models\StoryReact;
+use App\Models\User;
 use App\Traits\apiresponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -14,9 +16,21 @@ class StoryController extends Controller
 {
     use apiresponse;
 
+    public function followerStory()
+    {
+        $story = Follow::where('follower_id', auth()->user()->id)->get()->pluck('user_id');
+
+        $data = User::whereIn('id', $story)
+            ->with(['story' => function ($query) {
+                $query->latest()->take(1);
+            }])
+            ->select('id', 'name')->get();
+
+        return $this->success($data, 'Data Fetch Succesfully!', 200);
+    }
+
     public function store(Request $request)
     {
-
         $validator = Validator::make($request->all(), [
             // 'user_id' => 'required|exists:users,id',
             'content' => 'required|string',
@@ -62,7 +76,7 @@ class StoryController extends Controller
         $story_react = StoryReact::create([
             'user_id' => auth()->user()->id,
             'content' => $request->content,
-            'react' => $request->react ??'love',
+            'react' => $request->react ?? 'love',
         ]);
     }
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use App\Models\Post;
 use App\Models\Reel;
+use App\Models\Tag;
 use App\Notifications\Notify;
 use Illuminate\Support\Facades\Validator;
 use App\Traits\apiresponse;
@@ -29,6 +30,7 @@ class PostController extends Controller
             'title' => 'required|string',
             'description' => 'required|string',
             'image' => 'required|image', // Ensure the uploaded file is an image
+            'tag' => 'nullable|array'
         ]);
 
         if ($validator->fails()) {
@@ -60,8 +62,26 @@ class PostController extends Controller
             'description' => $request->description,
             'file_url' => $image_url,
         ]);
+        if ($request->tags) {
+            foreach ($request->tags as $tag) {
+                $tag = Tag::create([
+                    'post_id' => $post->id,
+                    'text' => $tag
+                ]);
+            }
+        }
         return $this->success($post, 'Comment added successfully!', 201);
     }
 
+    public function forYou()
+    {
+        $post = Post::where('user_id', '!=', auth()->id())
+            ->with(['user', 'tags'])
+            ->withCount('likes')
+            ->withCount('comments')
+            ->latest()
+            ->get();
 
+        return $this->success($post, 'Data Fetch Succesfully!', 200);
+    }
 }
