@@ -168,4 +168,26 @@ class ChatController extends Controller
             'blockedyou' => $this->checkBlockedMe($user->id),
         ], "Conversations fetched successfully", 200);
     }
+
+    public function searchUsers(Request $request)
+    {
+        // Validate the request to ensure 'query' exists
+        $validation = Validator::make($request->all(), [
+            'query' => 'required|string',
+        ]);
+
+        if ($validation->fails()) {
+            return $this->error([], $validation->errors(), 422); // Validation error
+        }
+
+        $searchQuery = $request->input('query');
+
+        $user = new User();
+
+        $users = $user->searchChatables($searchQuery);
+
+        return $this->success([
+            'users' => $users->select('id','name','avatar'),
+        ], "Users fetched successfully", 200);
+    }
 }

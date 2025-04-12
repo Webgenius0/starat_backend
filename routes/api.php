@@ -18,6 +18,8 @@ use App\Http\Controllers\API\UserAuthController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\VideoUploadController;
 use App\Http\Controllers\Api\WishlistController;
+use App\Http\Controllers\BookmarkController;
+use App\Http\Controllers\RepostController;
 use App\Models\BlockUser;
 use App\Models\User;
 use App\Notifications\Notify;
@@ -68,6 +70,12 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         Route::get('get', 'index');
     });
 
+    // All Repost route
+    Route::controller(RepostController::class)->prefix('repost')->group(function () {
+        Route::post('store', 'store');
+        Route::get('get', 'index');
+    });
+
     // All Wishlist route
     Route::controller(WishlistController::class)->prefix('wishlist')->group(function () {
         Route::post('store', 'store');
@@ -88,11 +96,11 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         Route::get('get', 'index');
     });
 
-     // All Followers
-    //  Route::controller(FollowController::class)->prefix('follow')->group(function () {
-    //     Route::post('store', 'store');
-    //     Route::get('get', 'index');
-    // });
+    // All Bookmarks
+     Route::controller(BookmarkController::class)->prefix('bookmarks')->group(function () {
+        Route::post('store', 'store');
+        Route::get('get', 'index');
+    });
 
     // All story route
     Route::controller(StoryController::class)->prefix('story')->group(function () {
@@ -111,6 +119,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         Route::post('/chat/group/create', 'groupCreate');
         Route::get('/chat/get', 'getConversations');
         Route::get('/chat/user/covesation/{user}', 'getUserConversation');
+        Route::post('/chat/search', 'searchUsers');
     });
 
 

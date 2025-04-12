@@ -15,7 +15,7 @@ class Post extends Model
 
     public function tags()
     {
-        return $this->hasMany(Tag::class,'post_id');
+        return $this->hasMany(Tag::class, 'post_id');
     }
     public function comments()
     {
@@ -35,5 +35,10 @@ class Post extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function repost()
+    {
+        return $this->hasMany(Repost::class, 'post_id');
     }
 }

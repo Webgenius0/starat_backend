@@ -75,13 +75,19 @@ class PostController extends Controller
 
     public function forYou()
     {
-        $post = Post::where('user_id', '!=', auth()->id())
+        $userId = auth()->id();
+        $posts = Post::where('user_id', '!=', $userId)
             ->with(['user', 'tags'])
-            ->withCount('likes')
-            ->withCount('comments')
+            ->withCount(['likes', 'comments', 'repost'])
+            ->with(['bookmarks' => function ($q) use ($userId) {
+                $q->where('user_id', $userId);
+            }])
             ->latest()
             ->get();
-
-        return $this->success($post, 'Data Fetch Succesfully!', 200);
+        $posts->each(function ($post) {
+            $post->is_bookmarked = $post->bookmarks->isNotEmpty();
+            unset($post->bookmarks);
+        });
+        return $this->success($posts, 'Data Fetch Succesfully!', 200);
     }
 }

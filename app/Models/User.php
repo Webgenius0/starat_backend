@@ -98,16 +98,16 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasVerifiedEmail() === true;
     }
 
-    public function searchChatables(string $query): ?Collection
+    public static function searchChatables(string $query): ?Collection
     {
-        $searchableFields = ['name'];
+        $searchableFields = ['name']; // Fields that can be searched
         return User::where(function ($queryBuilder) use ($searchableFields, $query) {
             foreach ($searchableFields as $field) {
                 $queryBuilder->orWhere($field, 'LIKE', '%' . $query . '%');
             }
         })
-            ->limit(20)
-            ->get();
+            ->limit(20) // Limit to 20 results
+            ->get(); // Get results
     }
 
     //backend
@@ -135,6 +135,11 @@ class User extends Authenticatable implements JWTSubject
 
     public function story()
     {
-        return $this->hasMany(Story::class,'user_id');
+        return $this->hasMany(Story::class, 'user_id');
+    }
+
+    public function posts()
+    {
+        return $this->belongsToMany(Post::class, 'reposts', 'user_id', 'post_id')->withTimestamps();
     }
 }
