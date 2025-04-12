@@ -30,7 +30,7 @@ class UserAuthController extends Controller
             'username' => 'required|string|max:255|unique:users',
             'email' => 'required|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed', // password confirmation
-            'phone' => 'required|numeric|unique:users', // Ensure phone is unique and numeric
+            'phone' => 'required|numeric', // Ensure phone is unique and numeric
             'birthday' => 'required|date|before:today', // Ensure birthday is a valid date
             'name' => 'required|string|max:255', // Ensure name is provided
         ]);
