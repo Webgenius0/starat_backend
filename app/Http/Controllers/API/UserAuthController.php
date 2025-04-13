@@ -163,19 +163,14 @@ class UserAuthController extends Controller
             ], 400);
         }
 
-        // Check if the OTP has expired
-        if (Carbon::now()->gt(Carbon::parse($user->otp_expiry))) {
-            return response()->json([
-                'message' => 'OTP has expired.',
-            ], 400);
-        }
 
         // Proceed to reset the password
         $user->password = Hash::make($request->password);
         $user->otp = null;
-        $user->otp_expiry = null;
+        $user->is_varified = true;
         $user->save();
-        return $this->success([], 'Password reset successfully.', 200);
+        $token = JWTAuth::fromUser($user);
+        return $this->success($token, 'Password reset successfully.', 200);
     }
 
     // Resend Otp
@@ -222,13 +217,13 @@ class UserAuthController extends Controller
             return $this->error([], 'Invalid OTP.', 400);
         }
 
-        $user->is_varified = true;
-        $user->otp = null;
-        $user->save();
+        // $user->is_varified = true;
+        // $user->otp = null;
+        // $user->save();
 
-        $token = JWTAuth::fromUser($user);
+        // $token = JWTAuth::fromUser($user);
 
-        return $this->success($token, 'OTP validated successfully. Your account is now verified.', 200);
+        return $this->success([], 'OTP validated successfully. Your account is now verified.', 200);
     }
 
 

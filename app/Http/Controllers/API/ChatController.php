@@ -27,10 +27,12 @@ class ChatController extends Controller
         $user = auth()->user();
         $conversations = $user->conversations()->with([
             'participants' => function ($query) {
-                $query->where('participantable_id', '!=', auth()->id());
+                $query->where('participantable_id', '!=', auth()->id())
+                    ->with('participantable:id,name,avatar'); // Load name + avatar
             },
             'lastMessage'
         ])->get();
+
         return $this->success([
             'conversations' => $conversations,
         ], "Conversations fetched successfully", 200);
@@ -187,7 +189,7 @@ class ChatController extends Controller
         $users = $user->searchChatables($searchQuery);
 
         return $this->success([
-            'users' => $users->select('id','name','avatar'),
+            'users' => $users->select('id', 'name', 'avatar'),
         ], "Users fetched successfully", 200);
     }
 }

@@ -18,18 +18,36 @@ class StoryController extends Controller
 
     public function followerStory()
     {
-        $story = Follow::where('follower_id', auth()->user()->id)->pluck('user_id');
+        $authUser = auth()->user();
 
-        $data = User::whereIn('id', $story)
-            ->whereHas('story') // Exclude users without stories
+        // Get IDs of users the authenticated user follows
+        $followedUserIds = Follow::where('follower_id', $authUser->id)->pluck('user_id');
+        $followedUsersWithStories = User::whereIn('id', $followedUserIds)
+            ->whereHas('story') // Ensure the user has a story
             ->with(['story' => function ($query) {
                 $query->latest()->take(1); // Fetch latest story only
             }])
             ->select('id', 'name')
             ->get();
+        $myStory = $authUser->story()->latest()->first();
 
-        return $this->success($data, 'Data Fetched Successfully!', 200);
+        if ($myStory) {
+            $myData = [
+                'id' => $authUser->id,
+                'name' => $authUser->name,
+                'story' => [$myStory],
+            ];
+        } else {
+            $myData = null;
+        }
+
+        // Prepend user's own story (or null) to the collection
+        $result = collect($followedUsersWithStories);
+        $result->prepend($myData);
+
+        return $this->success($result->values(), 'Data Fetched Successfully!', 200);
     }
+
 
     public function store(Request $request)
     {
