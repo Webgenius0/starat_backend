@@ -98,5 +98,7 @@ class StoryController extends Controller
             'content' => $request->content,
             'react' => $request->react ?? 'love',
         ]);
+
+        return $this->success($story_react, 'Successfully!', 200);
     }
 }

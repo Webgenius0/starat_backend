@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Helper\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\Comment;
+use App\Models\Follow;
 use App\Models\Post;
 use App\Models\Reel;
 use App\Models\Tag;
+use App\Models\User;
 use App\Notifications\Notify;
 use Illuminate\Support\Facades\Validator;
 use App\Traits\apiresponse;
@@ -73,9 +75,24 @@ class PostController extends Controller
         return $this->success($post, 'Comment added successfully!', 201);
     }
 
-    public function forYou()
+    public function forYou(Request $request)
     {
         $userId = auth()->id();
+
+        // Get suggested users to follow
+        $followingIds = Follow::where('follower_id', $userId)
+            ->pluck('user_id')
+            ->toArray();
+
+        $followingIds[] = $userId; // Exclude the authenticated user
+
+        $usersToFollow = User::whereNotIn('id', $followingIds)
+            ->inRandomOrder()
+            ->where('is_admin', false)
+            ->take(5) // You can adjust the number of users as needed
+            ->get();
+
+        // Get posts
         $posts = Post::where('user_id', '!=', $userId)
             ->with(['user', 'tags'])
             ->withCount(['likes', 'comments', 'repost'])
@@ -83,11 +100,18 @@ class PostController extends Controller
                 $q->where('user_id', $userId);
             }])
             ->latest()
-            ->get();
+            ->paginate(2);
+
+        // Add bookmark status to posts and remove unnecessary data
         $posts->each(function ($post) {
             $post->is_bookmarked = $post->bookmarks->isNotEmpty();
             unset($post->bookmarks);
         });
-        return $this->success($posts, 'Data Fetch Succesfully!', 200);
+
+        // Return posts along with suggested users to follow
+        return $this->success([
+            'posts' => $posts,
+            'suggested_users' => $usersToFollow
+        ], 'Data fetched successfully!', 200);
     }
 }
