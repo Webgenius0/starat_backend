@@ -16,4 +16,15 @@ class Reel extends Model
     {
         return $this->morphMany(Bookmark::class, 'bookmarkable');
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function likes()
+    {
+        return $this->morphMany(Like::class, 'likeable');
+    }
+
 }

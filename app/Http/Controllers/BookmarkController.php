@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Bookmark;
 use App\Models\Post;
+use App\Models\Reel;
 use App\Traits\apiresponse;
 use Illuminate\Http\Request;
 
@@ -13,33 +14,42 @@ class BookmarkController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'post_id' => 'required|exists:posts,id',
+            'bookmarkable_id' => 'required|integer',
+            'type' => 'required|string|in:post,reel', // only allow these two
         ]);
 
         $user = auth()->user();
-        $post = Post::findOrFail($validated['post_id']);
 
-        // Prevent user from bookmarking their own post (optional)
-        if ($post->user_id == $user->id) {
-            return $this->error([], 'You cannot bookmark your own post.', 403);
+        // Determine the model class based on the 'type'
+        $bookmarkableType = match ($validated['type']) {
+            'post' => Post::class,
+            'reel' => Reel::class,
+        };
+
+        // Find the bookmarkable item
+        $bookmarkable = $bookmarkableType::findOrFail($validated['bookmarkable_id']);
+
+        // Optional: prevent bookmarking your own content
+        if ($bookmarkable->user_id == $user->id) {
+            return $this->error([], 'You cannot bookmark your own content.', 403);
         }
 
         // Check if already bookmarked
         $alreadyBookmarked = Bookmark::where('user_id', $user->id)
-            ->where('bookmarkable_id', $post->id)
-            ->where('bookmarkable_type', Post::class)
+            ->where('bookmarkable_id', $bookmarkable->id)
+            ->where('bookmarkable_type', $bookmarkableType)
             ->exists();
 
         if ($alreadyBookmarked) {
-            return $this->error([], 'Post already bookmarked.', 409);
+            return $this->error([], ucfirst($validated['type']) . ' already bookmarked.', 409);
         }
 
-        // Bookmark it
+        // Create bookmark
         $user->bookmarks()->create([
-            'bookmarkable_id' => $post->id,
-            'bookmarkable_type' => Post::class,
+            'bookmarkable_id' => $bookmarkable->id,
+            'bookmarkable_type' => $bookmarkableType,
         ]);
 
-        return $this->success([], 'Post bookmarked successfully.', 200);
+        return $this->success([], ucfirst($validated['type']) . ' bookmarked successfully.', 200);
     }
 }

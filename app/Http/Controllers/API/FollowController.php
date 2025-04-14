@@ -77,7 +77,7 @@ class FollowController extends Controller
         $usersToFollow = User::whereNotIn('id', $followingIds)
             ->inRandomOrder()
             ->where('is_admin', false)
-            ->take(5) // You can adjust the number of users as needed
+            ->take(5) 
             ->get();
 
         $posts = Post::whereIn('user_id', $followingIds)

@@ -10,6 +10,7 @@ use App\Http\Controllers\API\LikeController;
 use App\Http\Controllers\API\MessagingController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\PostController;
+use App\Http\Controllers\API\ReelsController;
 use App\Http\Controllers\API\RemainderController;
 use App\Http\Controllers\API\ReportUserController;
 use App\Http\Controllers\API\SocialmediaController;
@@ -97,9 +98,16 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
     });
 
     // All Bookmarks
-     Route::controller(BookmarkController::class)->prefix('bookmarks')->group(function () {
+    Route::controller(BookmarkController::class)->prefix('bookmarks')->group(function () {
         Route::post('store', 'store');
         Route::get('get', 'index');
+    });
+
+    // All Reels 
+    Route::controller(ReelsController::class)->prefix('reels')->group(function () {
+        Route::post('store', 'store');
+        Route::get('get', 'index');
+        Route::get('timeline', 'timeline');
     });
 
     // All story route
