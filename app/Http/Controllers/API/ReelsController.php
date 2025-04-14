@@ -30,20 +30,34 @@ class ReelsController extends Controller
     {
         $authUser = auth()->user();
 
-        // Fetch reels with user and their followers
-        $data = $this->reels->with('user.following')->withCount(['likes', 'comments'])->orderBy('created_at', 'DESC')->paginate(2);
+        // Fetch reels with user only (no need to load their followings)
+        $data = $this->reels->with('user') // No 'user.following'
+            ->withCount(['likes', 'comments'])
+            ->orderBy('created_at', 'DESC')
+            ->paginate(2);
+
         $data->getCollection()->transform(function ($reel) use ($authUser) {
-            $isFollow = $authUser->following()->where('follower_id', $reel->user->id)->exists();
+            // Check if the authenticated user follows the reel's user
+            $isFollow = $authUser->following()
+                ->where('follower_id', $reel->user->id)
+                ->exists();
+
             $reel->user->is_follow = $isFollow;
 
-            // Check if the authenticated user has bookmarked this reel
-            $isBookmark = $reel->bookmarks->where('user_id', $authUser->id)->isNotEmpty();
+            // Check if the reel is bookmarked
+            $isBookmark = $reel->bookmarks
+                ->where('user_id', $authUser->id)
+                ->isNotEmpty();
+
             $reel->is_bookmark = $isBookmark;
+            unset($reel->bookmarks);
+
             return $reel;
         });
 
         return $this->success($data, 'Data Fetch Successfully!', 200);
     }
+
 
     public function store(Request $request)
     {
