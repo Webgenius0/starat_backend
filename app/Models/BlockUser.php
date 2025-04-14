@@ -8,8 +8,8 @@ class BlockUser extends Model
 {
     protected $fillable = [
         'user_id',
-        'reported_user_id',
-        'report',
+        'blocked_user_id',
+        'created_at'
     ];
 
     /**

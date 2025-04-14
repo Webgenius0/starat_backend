@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Helper\Helper;
 use App\Http\Controllers\Controller;
+use App\Models\BlockUser;
 use App\Models\Chat;
 use App\Models\Message;
 use App\Models\User;
@@ -24,19 +25,30 @@ class ChatController extends Controller
 
     public function getConversations()
     {
+        // Get the authenticated user
         $user = auth()->user();
+
+        // Fetch all conversations of the authenticated user with participants and last messages
         $conversations = $user->conversations()->with([
             'participants' => function ($query) {
-                $query->where('participantable_id', '!=', auth()->id())
-                    ->with('participantable:id,name,avatar'); // Load name + avatar
+                $query->where('participantable_id', '!=', auth()->id()) // Exclude the authenticated user
+                    ->with('participantable:id,name,avatar'); // Load name and avatar of the participant
             },
             'lastMessage'
         ])->get();
 
+        $conversations->transform(function ($conversation) {
+            $isReadByAuth = $conversation->readBy($conversation->authParticipant ?? auth()->user()) || $conversation->id == request()->input('selectedConversationId');
+            $conversation->readable = $isReadByAuth ? true : false;
+            return $conversation;
+        });
+
+        // Return the conversations with the readable status
         return $this->success([
             'conversations' => $conversations,
         ], "Conversations fetched successfully", 200);
     }
+
 
     public function sendMessage(Request $request)
     {
@@ -160,16 +172,84 @@ class ChatController extends Controller
     public function getUserConversation(User $user)
     {
         $otherUser = User::findOrFail($user->id);
-        $con = $otherUser->conversations()->with(['participants' => function ($query) {
-            $query->where('participantable_id', auth()->id());
-        }, 'messages'])->first();
 
+        // Fetch the conversation along with participants and messages
+        $con = $otherUser->conversations()->with([
+            'participants' => function ($query) {
+                $query->where('participantable_id', auth()->id());
+            },
+            'messages'
+        ])->first();
+
+        //mark as read
+
+        $con->markAsRead();
+
+        // Return the conversation details with block status information
         return $this->success([
             'conversations' => $con,
             'youblocked' => $this->checkUserBlocked($user->id),
             'blockedyou' => $this->checkBlockedMe($user->id),
         ], "Conversations fetched successfully", 200);
     }
+
+
+    public function createCovesation(Request $request)
+    {
+        $validation = Validator::make($request->all(), [
+            'user_id' => 'required|integer',
+        ]);
+
+        if ($validation->fails()) {
+            return $this->error([], $validation->errors(), 422);
+        }
+
+        $otherUser = User::find($request->user_id);
+        if (!$otherUser) {
+            return $this->error([], 'User Not found!', 422);
+        }
+
+        $auth = auth()->user();
+        $conversation = $auth->createConversationWith($otherUser); // Pass the model, not ID
+
+        return $this->success($conversation, 'Conversation Created Successfully', 200);
+    }
+
+    public function covesationBlock(Request $request)
+    {
+        $validation = Validator::make($request->all(), [
+            'blocked_user_id' => 'required|integer|exists:users,id',
+        ]);
+
+        if ($validation->fails()) {
+            return $this->error([], $validation->errors(), 422);
+        }
+
+        $authUser = auth()->user();
+
+        if ($authUser->id == $request->blocked_user_id) {
+            return $this->error([], 'You cannot block yourself.', 422);
+        }
+
+        $alreadyBlocked = BlockUser::where('user_id', $authUser->id)
+            ->where('blocked_user_id', $request->blocked_user_id)
+            ->first();
+
+        if ($alreadyBlocked) {
+            $alreadyBlocked->delete();
+            return $this->success([], 'User unblocked',  200);
+        }
+
+        $block = BlockUser::create([
+            'user_id' => $authUser->id,
+            'blocked_user_id' => $request->blocked_user_id,
+            'created_at' => now()
+        ]);
+
+        return $this->success($block, 'User blocked successfully.', 200);
+    }
+
+
 
     public function searchUsers(Request $request)
     {

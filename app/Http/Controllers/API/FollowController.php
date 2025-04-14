@@ -65,14 +65,38 @@ class FollowController extends Controller
 
     public function post()
     {
-        $authUserId = auth()->id();
-        $followingIds = Follow::where('follower_id', $authUserId)
-            ->pluck('user_id');
+        $userId = auth()->id();
 
-        $post = Post::whereIn('user_id', $followingIds)
+        // Get suggested users to follow
+        $followingIds = Follow::where('follower_id', $userId)
+            ->pluck('user_id')
+            ->toArray();
+
+        $followingIds[] = $userId; // Exclude the authenticated user
+
+        $usersToFollow = User::whereNotIn('id', $followingIds)
+            ->inRandomOrder()
+            ->where('is_admin', false)
+            ->take(5) // You can adjust the number of users as needed
+            ->get();
+
+        $posts = Post::whereIn('user_id', $followingIds)
             ->with(['user', 'tags'])
-            ->withCount('likes')
-            ->withCount('comments')->get();
-        return $this->success($post, 'Data Fetch Successfully!', 200);
+            ->withCount(['likes', 'comments', 'repost'])
+            ->with(['bookmarks' => function ($q) use ($userId) {
+                $q->where('user_id', $userId);
+            }])
+            ->latest()
+            ->paginate(2);
+        // Add bookmark status to posts and remove unnecessary data
+        $posts->each(function ($post) {
+            $post->is_bookmarked = $post->bookmarks->isNotEmpty();
+            unset($post->bookmarks);
+        });
+
+        return $this->success([
+            'posts' => $posts,
+            'suggested_users' => $usersToFollow
+        ], 'Data Fetch Successfully!', 200);
     }
 }
