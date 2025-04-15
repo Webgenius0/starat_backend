@@ -22,16 +22,29 @@ class StoryController extends Controller
 
         // Get IDs of users the authenticated user follows
         $followedUserIds = Follow::where('follower_id', $authUser->id)->pluck('user_id');
+
+        // Fetch followed users who have a story
         $followedUsersWithStories = User::whereIn('id', $followedUserIds)
-            ->whereHas('story') // Ensure the user has a story
+            ->whereHas('story')
             ->with(['story' => function ($query) {
-                $query->latest()->take(1); // Fetch latest story only
+                $query->latest()->take(1);
             }])
             ->select('id', 'name')
-            ->get();
+            ->get()
+            ->map(function ($user) use ($authUser) {
+                // Attach is_me field to each story
+                $user->story = $user->story->map(function ($story) use ($authUser, $user) {
+                    $story->is_me = $user->id === $authUser->id;
+                    return $story;
+                });
+                return $user;
+            });
+
+        // Fetch the authenticated user's latest story
         $myStory = $authUser->story()->latest()->first();
 
         if ($myStory) {
+            $myStory->is_me = true; // Add is_me = true
             $myData = [
                 'id' => $authUser->id,
                 'name' => $authUser->name,
@@ -41,12 +54,15 @@ class StoryController extends Controller
             $myData = null;
         }
 
-        // Prepend user's own story (or null) to the collection
+        // Prepend own story (if exists) to the beginning of the collection
         $result = collect($followedUsersWithStories);
-        $result->prepend($myData);
+        if ($myData) {
+            $result->prepend((object) $myData);
+        }
 
         return $this->success($result->values(), 'Data Fetched Successfully!', 200);
     }
+
 
 
     public function store(Request $request)
