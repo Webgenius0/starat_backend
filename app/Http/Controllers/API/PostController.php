@@ -89,10 +89,10 @@ class PostController extends Controller
         $usersToFollow = User::whereNotIn('id', $followingIds)
             ->inRandomOrder()
             ->where('is_admin', false)
-            ->take(5) // You can adjust the number of users as needed
+            ->take(5)
             ->get();
 
-        // Get posts
+        // Get paginated posts
         $posts = Post::where('user_id', '!=', $userId)
             ->with(['user', 'tags'])
             ->withCount(['likes', 'comments', 'repost'])
@@ -100,18 +100,28 @@ class PostController extends Controller
                 $q->where('user_id', $userId);
             }])
             ->latest()
-            ->paginate(2);
+            ->paginate(5);
 
-        // Add bookmark status to posts and remove unnecessary data
-        $posts->each(function ($post) {
+        // Add bookmark status
+        $posts->getCollection()->transform(function ($post) {
             $post->is_bookmarked = $post->bookmarks->isNotEmpty();
             unset($post->bookmarks);
+            return $post;
         });
 
-        // Return posts along with suggested users to follow
+        // Create a virtual post item to hold suggested users
+        $suggestedUsersItem = (object)[
+            'type' => 'suggested_users',
+            'users' => $usersToFollow,
+        ];
+
+        // Append to end of posts collection
+        $posts->setCollection(
+            $posts->getCollection()->push($suggestedUsersItem)
+        );
+
         return $this->success([
             'posts' => $posts,
-            'suggested_users' => $usersToFollow
         ], 'Data fetched successfully!', 200);
     }
 }
