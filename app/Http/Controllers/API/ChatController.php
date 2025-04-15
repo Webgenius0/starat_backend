@@ -40,6 +40,7 @@ class ChatController extends Controller
         $conversations->transform(function ($conversation) {
             $isReadByAuth = $conversation->readBy($conversation->authParticipant ?? auth()->user()) || $conversation->id == request()->input('selectedConversationId');
             $conversation->readable = $isReadByAuth ? true : false;
+            unset($conversation->authParticipant);
             return $conversation;
         });
 
