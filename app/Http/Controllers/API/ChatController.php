@@ -174,7 +174,7 @@ class ChatController extends Controller
     {
         $otherUser = User::findOrFail($user->id);
 
-        // Fetch the conversation along with participants and messages
+        // Fetch the conversation with participants and messages
         $con = $otherUser->conversations()->with([
             'participants' => function ($query) {
                 $query->where('participantable_id', auth()->id());
@@ -182,17 +182,20 @@ class ChatController extends Controller
             'messages'
         ])->first();
 
-        //mark as read
-
         $con->markAsRead();
 
-        // Return the conversation details with block status information
+        $messages = $con->messages->map(function ($message) {
+            $message->isMe = $message->sendable_id == auth()->id();
+            return $message;
+        });
+        $con->setRelation('messages', $messages);
         return $this->success([
             'conversations' => $con,
             'youblocked' => $this->checkUserBlocked($user->id),
             'blockedyou' => $this->checkBlockedMe($user->id),
         ], "Conversations fetched successfully", 200);
     }
+
 
 
     public function createCovesation(Request $request)
