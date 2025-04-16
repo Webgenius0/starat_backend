@@ -31,7 +31,7 @@ class ChatController extends Controller
         // Fetch all conversations of the authenticated user with participants and last messages
         $conversations = $user->conversations()->with([
             'participants' => function ($query) {
-                $query->where('participantable_id', '!=', auth()->id())->select('participantable_type', 'participantable_id','conversation_id') // Exclude the authenticated user
+                $query->where('participantable_id', '!=', auth()->id())->select('participantable_type', 'participantable_id', 'conversation_id') // Exclude the authenticated user
                     ->with('participantable:id,name,avatar');
             },
             'lastMessage'
@@ -175,21 +175,37 @@ class ChatController extends Controller
     {
         $otherUser = User::findOrFail($user->id);
 
-        // Fetch the conversation with participants and messages
-        $con = $otherUser->conversations()->with(
-            'messages'
-        )->select('wire_conversations.id')->first();
+        // Get the conversation between the authenticated user and the other user
+        $conversation = auth()->user()->conversations()
+            ->whereHas('participants', function ($query) use ($otherUser) {
+                $query->where('participantable_id', $otherUser->id);
+            })
+            ->with([
+                // Only eager load the other user in participants
+                'participants' => function ($query) {
+                    $query->where('participantable_id', '!=', auth()->id())
+                        ->select('participantable_type', 'participantable_id', 'conversation_id')
+                        ->with('participantable:id,name,avatar');
+                },
+                'messages'
+            ])
+            ->select('wire_conversations.id')
+            ->firstOrFail();
 
-        $con->markAsRead();
+        // Mark conversation as read
+        $conversation->markAsRead();
 
-        $messages = $con->messages->map(function ($message) {
+        // Format messages
+        $messages = $conversation->messages->map(function ($message) {
             $message->isMe = $message->sendable_id == auth()->id();
             return $message;
         });
-        $con->setRelation('messages', $messages);
-        unset($con->pivot);
+
+        $conversation->setRelation('messages', $messages);
+        unset($conversation->pivot);
+
         return $this->success([
-            'conversations' => $con,
+            'conversations' => $conversation,
             'youblocked' => $this->checkUserBlocked($user->id),
             'blockedyou' => $this->checkBlockedMe($user->id),
         ], "Conversations fetched successfully", 200);
