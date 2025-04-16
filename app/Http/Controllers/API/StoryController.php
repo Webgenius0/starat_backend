@@ -99,7 +99,7 @@ class StoryController extends Controller
     {
         $validator = Validator::make($request->all(), [
             // 'user_id' => 'required|exists:users,id',
-            'post_id' => 'required|string',
+            'story_id' => 'required|string',
             'react' => 'nullable|in:love,haha',
         ]);
         if ($validator->fails()) {
@@ -111,10 +111,20 @@ class StoryController extends Controller
         }
         $story_react = StoryReact::create([
             'user_id' => auth()->user()->id,
-            'content' => $request->content,
-            'react' => $request->react ?? 'love',
+            'story_id' => $request->story_id,
+            'type' => $request->react ?? 'love',
         ]);
 
         return $this->success($story_react, 'Successfully!', 200);
+    }
+
+    public function specific($id)
+    {
+        $story = Story::where('user_id', $id)
+            ->with('user:id,name,avatar')
+            ->withCount('react')
+            ->orderBy('created_at', 'DESC')
+            ->get();
+        return $this->success($story, 'Successfully!', 200);
     }
 }

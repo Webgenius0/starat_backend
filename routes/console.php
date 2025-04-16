@@ -11,6 +11,6 @@ Artisan::command('inspire', function () {
 
 Schedule::command(DayStoreDeleted::class)->everyMinute();
 
-Schedule::call(function () {
-    logger('chcek');
-})->everySecond();
+// Schedule::call(function () {
+//     logger('chcek');
+// })->everySecond();

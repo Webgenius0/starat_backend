@@ -12,4 +12,16 @@ class Story extends Model
     {
         return $value ? url($value) : null;
     }
+
+    public function react()
+    {
+        return $this->hasMany(StoryReact::class, 'story_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    
 }
