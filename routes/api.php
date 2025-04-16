@@ -126,7 +126,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         Route::get('/chat/get/messages', 'getConversations');
         Route::post('/chat/group/create', 'groupCreate');
         Route::get('/chat/get', 'getConversations');
-        Route::get('/chat/user/covesation/{user}', 'getUserConversation');
+        Route::get('/chat/user/conversation/{user}', 'getUserConversation');
         Route::post('/chat/search', 'searchUsers');
         Route::post('/chat/create/covesation', 'createCovesation');
         Route::post('/chat/block', 'covesationBlock');

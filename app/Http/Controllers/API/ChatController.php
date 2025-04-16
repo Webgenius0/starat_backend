@@ -31,16 +31,17 @@ class ChatController extends Controller
         // Fetch all conversations of the authenticated user with participants and last messages
         $conversations = $user->conversations()->with([
             'participants' => function ($query) {
-                $query->where('participantable_id', '!=', auth()->id()) // Exclude the authenticated user
-                    ->with('participantable:id,name,avatar'); // Load name and avatar of the participant
+                $query->where('participantable_id', '!=', auth()->id())->select('participantable_type', 'participantable_id','conversation_id') // Exclude the authenticated user
+                    ->with('participantable:id,name,avatar');
             },
             'lastMessage'
-        ])->get();
+        ])->select('wire_conversations.id')->get();
 
         $conversations->transform(function ($conversation) {
             $isReadByAuth = $conversation->readBy($conversation->authParticipant ?? auth()->user()) || $conversation->id == request()->input('selectedConversationId');
             $conversation->readable = $isReadByAuth ? true : false;
             unset($conversation->authParticipant);
+            unset($conversation->pivot);
             return $conversation;
         });
 
@@ -175,12 +176,9 @@ class ChatController extends Controller
         $otherUser = User::findOrFail($user->id);
 
         // Fetch the conversation with participants and messages
-        $con = $otherUser->conversations()->with([
-            'participants' => function ($query) {
-                $query->where('participantable_id', auth()->id());
-            },
+        $con = $otherUser->conversations()->with(
             'messages'
-        ])->first();
+        )->select('wire_conversations.id')->first();
 
         $con->markAsRead();
 
@@ -189,6 +187,7 @@ class ChatController extends Controller
             return $message;
         });
         $con->setRelation('messages', $messages);
+        unset($con->pivot);
         return $this->success([
             'conversations' => $con,
             'youblocked' => $this->checkUserBlocked($user->id),

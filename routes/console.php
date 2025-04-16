@@ -9,4 +9,8 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
 
-// Schedule::command(DayStoreDeleted::class)->everyMinute();
+Schedule::command(DayStoreDeleted::class)->everyMinute();
+
+Schedule::call(function () {
+    logger('chcek');
+})->everySecond();
