@@ -105,7 +105,11 @@ class PostController extends Controller
         // Add bookmark status
         $posts->getCollection()->transform(function ($post) {
             $post->is_bookmarked = $post->bookmarks->isNotEmpty();
+            $post->is_repost = $post->repost->isNotEmpty();
+            $post->is_likes = $post->likes->isNotEmpty();
+            unset($post->repost);
             unset($post->bookmarks);
+            unset($post->likes);
             return $post;
         });
 
