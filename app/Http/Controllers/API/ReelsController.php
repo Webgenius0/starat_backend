@@ -19,10 +19,13 @@ class ReelsController extends Controller
         $this->reels = $reels;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $user = auth()->user()->id;
-        $data = $this->reels->where('user_id', $user)->orderBy('created_at', 'DESC')->get();
+        $user_id = auth()->user()->id;
+        if ($request->user_id) {
+            $user_id = $request->user_id;
+        }
+        $data = $this->reels->where('user_id', $user_id)->orderBy('created_at', 'DESC')->paginate(7);
         return $this->success($data, 'Data Fetch Successfully!', 200);
     }
 

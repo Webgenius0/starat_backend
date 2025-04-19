@@ -19,9 +19,16 @@ class PostController extends Controller
 {
 
     use apiresponse;
-    public function index($id)
+    public function index(Request $request)
     {
-        $post = Post::with(['comments', 'likes'])->find($id);
+        $user_id = auth()->user()->id;
+        if ($request->user_id) {
+            $user_id = $request->user_id;
+        }
+        $post = Post::where('user_id', $user_id)
+            ->with(['comments', 'likes', 'tags'])
+            ->orderBy('created_at', 'DESC')
+            ->paginate(7);
 
         return $this->success($post, 'Comment fetch successfully!', 200);
     }
@@ -80,11 +87,9 @@ class PostController extends Controller
         $userId = auth()->id();
 
         // Get suggested users to follow
-        $followingIds = Follow::where('follower_id', $userId)
-            ->pluck('user_id')
+        $followingIds = Follow::where('user_id', $userId)
+            ->pluck('follower_id')
             ->toArray();
-
-        $followingIds[] = $userId; // Exclude the authenticated user
 
         $usersToFollow = User::whereNotIn('id', $followingIds)
             ->inRandomOrder()
@@ -93,7 +98,8 @@ class PostController extends Controller
             ->get();
 
         // Get paginated posts
-        $posts = Post::where('user_id', '!=', $userId)
+        $posts = Post::whereNotIn('user_id', $followingIds)
+            ->where('user_id', '!=', $userId)
             ->with(['user', 'tags'])
             ->withCount(['likes', 'comments', 'repost'])
             ->with(['bookmarks' => function ($q) use ($userId) {

@@ -4,6 +4,7 @@ use App\Http\Controllers\API\BlockUserController;
 use App\Http\Controllers\API\category\CategoryController;
 use App\Http\Controllers\API\ChatController;
 use App\Http\Controllers\API\CommentController;
+use App\Http\Controllers\API\FilterController;
 use App\Http\Controllers\API\FollowController;
 use App\Http\Controllers\API\HobbyController;
 use App\Http\Controllers\API\LikeController;
@@ -18,13 +19,14 @@ use App\Http\Controllers\API\StoryController;
 use App\Http\Controllers\API\UserAuthController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\VideoUploadController;
-use App\Http\Controllers\Api\WishlistController;
+use App\Http\Controllers\API\WishlistController;
 use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\RepostController;
 use App\Models\BlockUser;
 use App\Models\User;
 use App\Notifications\Notify;
 use Illuminate\Support\Facades\Route;
+use PhpOffice\PhpSpreadsheet\Calculation\TextData\Search;
 
 Route::controller(UserAuthController::class)->group(function () {
     Route::post('login', 'login');
@@ -56,7 +58,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
     Route::controller(PostController::class)->prefix('post')->group(function () {
         Route::post('store', 'store');
         Route::get('foryou', 'forYou');
-        Route::get('get/{id}', 'index');
+        Route::get('get', 'index');
     });
 
     // All hobby route
@@ -92,8 +94,8 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
     // All Followers
     Route::controller(FollowController::class)->prefix('follow')->group(function () {
         Route::post('store', 'store');
-        Route::get('how', 'whoToFollow');
-        Route::get('post', 'post');
+        // Route::get('how', 'whoToFollow');
+        Route::get('post', 'whoToFollow');
         Route::get('get', 'index');
     });
 
@@ -131,6 +133,11 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         Route::post('/chat/search', 'searchUsers');
         Route::post('/chat/create/covesation', 'createCovesation');
         Route::post('/chat/block', 'covesationBlock');
+    });
+
+    // All Filter 
+    Route::controller(FilterController::class)->prefix('search')->group(function () {
+        Route::post('get', 'index');
     });
 
 

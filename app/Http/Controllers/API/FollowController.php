@@ -31,72 +31,72 @@ class FollowController extends Controller
 
         $user_id = auth()->id();
         $follower_id = $request->input('follower_id');
-        $existingFollow = Follow::where('user_id', $follower_id)
-            ->where('follower_id', $user_id)
-            ->exists();
+        $existingFollow = Follow::where('user_id', $user_id)
+            ->where('follower_id', $follower_id)
+            ->first();
 
         if ($existingFollow) {
-            return $this->error([], 'You are already following this user', 400);
+            $existingFollow->delete();
+            return $this->error([], 'Remove Following', 400);
         }
         Follow::create([
-            'user_id' => $follower_id,
-            'follower_id' => $user_id
+            'user_id' => $user_id,
+            'follower_id' => $follower_id
         ]);
         return $this->success([], 'You are now following this user', 200);
     }
 
-    public function whoToFollow()
-    {
-        $authUserId = auth()->id();
-
-        // Get IDs of users the authenticated user is already following
-        $followingIds = Follow::where('follower_id', $authUserId)
-            ->pluck('user_id');
-
-        $followingIds[] = $authUserId;
-
-        $usersToFollow = User::whereNotIn('id', $followingIds)
-            ->inRandomOrder()
-            ->where('is_admin', false)
-            ->take(10)
-            ->get();
-        return $this->success($usersToFollow, 'Suggested users to follow', 200);
-    }
-
-    public function post()
+    public function whoToFollow(Request $request)
     {
         $userId = auth()->id();
 
-        // Get suggested users to follow
-        $followingIds = Follow::where('follower_id', $userId)
-            ->pluck('user_id')
+        $followingIds = Follow::where('user_id', $userId)
+            ->pluck('follower_id')
             ->toArray();
+        // Get IDs of users the authenticated user is following
 
-        $followingIds[] = $userId; // Exclude the authenticated user
-
+        // Get suggested users to follow (excluding already followed users and self)
         $usersToFollow = User::whereNotIn('id', $followingIds)
             ->inRandomOrder()
             ->where('is_admin', false)
-            ->take(5) 
+            ->take(5)
             ->get();
 
+        // Get posts only from followed users and self
         $posts = Post::whereIn('user_id', $followingIds)
+            ->where('user_id', '!=', $userId)
             ->with(['user', 'tags'])
             ->withCount(['likes', 'comments', 'repost'])
             ->with(['bookmarks' => function ($q) use ($userId) {
                 $q->where('user_id', $userId);
             }])
             ->latest()
-            ->paginate(2);
-        // Add bookmark status to posts and remove unnecessary data
-        $posts->each(function ($post) {
+            ->paginate(5);
+
+        // Add bookmark and interaction statuses
+        $posts->getCollection()->transform(function ($post) {
             $post->is_bookmarked = $post->bookmarks->isNotEmpty();
+            $post->is_repost = $post->repost->isNotEmpty();
+            $post->is_likes = $post->likes->isNotEmpty();
+            unset($post->repost);
             unset($post->bookmarks);
+            unset($post->likes);
+            return $post;
         });
+
+        // Suggested users block
+        $suggestedUsersItem = (object)[
+            'type' => 'suggested_users',
+            'users' => $usersToFollow,
+        ];
+
+        // Append suggested users item to posts
+        $posts->setCollection(
+            $posts->getCollection()->push($suggestedUsersItem)
+        );
 
         return $this->success([
             'posts' => $posts,
-            'suggested_users' => $usersToFollow
-        ], 'Data Fetch Successfully!', 200);
+        ], 'Data fetched successfully!', 200);
     }
 }

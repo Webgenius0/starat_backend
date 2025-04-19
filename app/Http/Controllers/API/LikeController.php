@@ -14,7 +14,20 @@ class LikeController extends Controller
 {
     use apiresponse;
 
-    
+    public function index(Request $request)
+    {
+        $user_id = auth()->user()->id;
+        if ($request->user_id) {
+            $user_id = $request->user_id;
+        }
+        $likes = Like::where('user_id', $user_id)
+            ->with('likeable')
+            ->orderBy('created_at', 'DESC')
+            ->get();
+        return $this->success($likes, 'Bookmark added successfully!', 200);
+    }
+
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -32,15 +45,34 @@ class LikeController extends Controller
         }
 
         $model = $request->likeable_type === 'post' ? Post::class : Reel::class;
-
-        $bookmark = Like::firstOrCreate([
+        $like = Like::where([
             'user_id' => auth()->user()->id,
             'likeable_id' => $request->likeable_id,
-            'likeable_type' => $model,  // Removed the extra space here
+            'likeable_type' => $model
+        ])->first();
+
+        if ($like) {
+            // If a like exists, delete it (unlike)
+            $like->delete();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Like removed successfully!',
+            ], 200);
+        }
+
+        // If no like exists, create a new one
+        $bookmark = Like::create([
+            'user_id' => auth()->user()->id,
+            'likeable_id' => $request->likeable_id,
+            'likeable_type' => $model,
             'type' => $request->type,
         ]);
 
-        return $this->success($bookmark, 'Bookmark added successfully!', 201);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Like added successfully!',
+            'data' => $bookmark
+        ], 200);
     }
-
 }
