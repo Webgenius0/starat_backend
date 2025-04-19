@@ -61,6 +61,10 @@ class FollowController extends Controller
             ->where('is_admin', false)
             ->take(5)
             ->get();
+        $usersToFollow->transform(function ($user) use ($followingIds) {
+            $user->is_follow = in_array($user->id, $followingIds);
+            return $user;
+        });
 
         // Get posts only from followed users and self
         $posts = Post::whereIn('user_id', $followingIds)

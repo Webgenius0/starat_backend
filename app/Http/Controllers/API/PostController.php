@@ -96,6 +96,10 @@ class PostController extends Controller
             ->where('is_admin', false)
             ->take(5)
             ->get();
+        $usersToFollow->transform(function ($user) use ($followingIds) {
+            $user->is_follow = in_array($user->id, $followingIds);
+            return $user;
+        });
 
         // Get paginated posts
         $posts = Post::whereNotIn('user_id', $followingIds)
