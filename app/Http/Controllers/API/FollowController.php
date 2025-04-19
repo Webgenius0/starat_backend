@@ -37,7 +37,7 @@ class FollowController extends Controller
 
         if ($existingFollow) {
             $existingFollow->delete();
-            return $this->error([], 'Remove Following', 400);
+            return $this->error([], 'Remove Following', 200);
         }
         Follow::create([
             'user_id' => $user_id,
