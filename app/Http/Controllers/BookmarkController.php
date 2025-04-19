@@ -42,7 +42,7 @@ class BookmarkController extends Controller
 
         if ($alreadyBookmarked) {
             $alreadyBookmarked->delete();
-            return $this->success([], 'Bookmarks remove successfully!', 409);
+            return $this->success([], 'Bookmarks remove successfully!', 200);
         }
 
         // Create bookmark
@@ -51,6 +51,6 @@ class BookmarkController extends Controller
             'bookmarkable_type' => $bookmarkableType,
         ]);
 
-        return $this->success([], ucfirst($validated['type']) . ' bookmarked successfully.', 200);
+        return $this->success([],  ' bookmarked successfully.', 200);
     }
 }
