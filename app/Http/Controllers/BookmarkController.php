@@ -38,10 +38,11 @@ class BookmarkController extends Controller
         $alreadyBookmarked = Bookmark::where('user_id', $user->id)
             ->where('bookmarkable_id', $bookmarkable->id)
             ->where('bookmarkable_type', $bookmarkableType)
-            ->exists();
+            ->first();
 
         if ($alreadyBookmarked) {
-            return $this->error([], ucfirst($validated['type']) . ' already bookmarked.', 409);
+            $alreadyBookmarked->delete();
+            return $this->success([], 'Bookmarks remove successfully!', 409);
         }
 
         // Create bookmark
