@@ -125,7 +125,7 @@ class StoryController extends Controller
         $followedUsersWithStories = User::whereIn('id', $followedUserIds)
             ->whereHas('story')
             ->with('story')
-            ->select('id', 'name')
+            ->select('id', 'name','avatar','base')
             ->get();
         return $this->success($followedUsersWithStories, 'Successfully!', 200);
     }
