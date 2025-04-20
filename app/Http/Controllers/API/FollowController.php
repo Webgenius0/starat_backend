@@ -13,7 +13,19 @@ use Illuminate\Support\Facades\Validator;
 class FollowController extends Controller
 {
     use apiresponse;
-    public function index() {}
+    public function index()
+    {
+        $userId = auth()->user()->id;
+        $followers = Follow::where('user_id', $userId)->with(['follower'])->orderBy('created_at', 'DESC')->get();
+        return $this->success($followers, 'Data Fetch Successfully!', 200);
+    }
+
+    public function following()
+    {
+        $userId = auth()->user()->id;
+        $followers = Follow::where('follower_id', $userId)->with(['follower'])->orderBy('created_at', 'DESC')->get();
+        return $this->success($followers, 'Data Fetch Successfully!', 200);
+    }
 
     public function store(Request $request)
     {

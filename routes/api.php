@@ -97,6 +97,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         // Route::get('how', 'whoToFollow');
         Route::get('post', 'whoToFollow');
         Route::get('get', 'index');
+        Route::get('following', 'following');
     });
 
     // All Bookmarks
