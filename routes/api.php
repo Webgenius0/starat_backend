@@ -119,7 +119,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         // home all followe story
         Route::get('followers', 'followerStory');
         Route::post('react', 'react');
-        Route::get('specific/{id}', 'specific');
+        Route::get('all', 'all');
     });
 
     // All Chat route

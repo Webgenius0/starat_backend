@@ -12,6 +12,11 @@ class Reel extends Model
         return $this->morphMany(Comment::class, 'commentable');
     }
 
+    public function getFileUrlAttribute($value)
+    {
+        return $value ? url($value) : null;
+    }
+
     public function bookmarks()
     {
         return $this->morphMany(Bookmark::class, 'bookmarkable');

@@ -20,10 +20,8 @@ class StoryController extends Controller
     {
         $authUser = auth()->user();
 
-        // Get IDs of users the authenticated user follows
         $followedUserIds = Follow::where('follower_id', $authUser->id)->pluck('user_id');
 
-        // Fetch followed users who have a story
         $followedUsersWithStories = User::whereIn('id', $followedUserIds)
             ->whereHas('story')
             ->with(['story' => function ($query) {
@@ -69,7 +67,7 @@ class StoryController extends Controller
     {
         $validator = Validator::make($request->all(), [
             // 'user_id' => 'required|exists:users,id',
-            'content' => 'required|string',
+            'content' => 'nullable|string',
             'media' => 'required|mimes:jpg,jpeg,png,mp4,avi,mkv|max:10240',
         ]);
         if ($validator->fails()) {
@@ -118,13 +116,17 @@ class StoryController extends Controller
         return $this->success($story_react, 'Successfully!', 200);
     }
 
-    public function specific($id)
+    public function all()
     {
-        $story = Story::where('user_id', $id)
-            ->with('user:id,name,avatar')
-            ->withCount('react')
-            ->orderBy('created_at', 'DESC')
+        $authUser = auth()->user();
+
+        $followedUserIds = Follow::where('follower_id', $authUser->id)->pluck('user_id');
+
+        $followedUsersWithStories = User::whereIn('id', $followedUserIds)
+            ->whereHas('story')
+            ->with('story')
+            ->select('id', 'name')
             ->get();
-        return $this->success($story, 'Successfully!', 200);
+        return $this->success($followedUsersWithStories, 'Successfully!', 200);
     }
 }
