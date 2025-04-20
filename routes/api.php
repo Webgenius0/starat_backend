@@ -117,10 +117,13 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
     Route::controller(StoryController::class)->prefix('story')->group(function () {
         Route::post('store', 'store');
         Route::get('get', 'index');
-        // home all followe story
+        Route::get('mute/{id}', 'mute');
+        Route::get('block/{id}', 'block');
+        Route::get('report/{id}', 'report');
         Route::get('followers', 'followerStory');
         Route::post('react', 'react');
         Route::get('all', 'all');
+        Route::get('/story/{slug}', 'showBySlug');
     });
 
     // All Chat route

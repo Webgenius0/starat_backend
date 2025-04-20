@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('stories', function (Blueprint $table) {
+        Schema::create('story_mutes', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id')->nullable();
-            $table->longText('content')->nullable();
-            $table->string('file_url')->nullable();
-            $table->string('slug');
+
+            $table->foreignIdFor(App\Models\User::class);
+            $table->foreignId('mute_user_id')->constrained('users');
+
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('stories');
+        Schema::dropIfExists('story_mutes');
     }
 };
