@@ -16,23 +16,31 @@ class FollowController extends Controller
     public function index()
     {
         $userId = auth()->user()->id;
-        $followers = Follow::where('user_id', $userId)->with(['follower'])->orderBy('created_at', 'DESC')->get();
+        $followers = Follow::where('follower_id', $userId)
+            ->with(['follower'])
+            ->orderBy('created_at', 'DESC')
+            ->get()
+            ->map(function ($follow) {
+                $follow->is_follow = false; // Add is_follow to each item
+                return $follow;
+            });
         return $this->success($followers, 'Data Fetch Successfully!', 200);
     }
 
     public function following()
     {
         $userId = auth()->user()->id;
-        $followers = Follow::where('user_id', $userId)->with(['follower'])->orderBy('created_at', 'DESC')->get();
-        $followers['is_follow'] = true;
 
-        // $followers->transform(function ($follow) use ($userId) {
-        //     $isFollow = Follow::where('user_id', $follow->follower_id)
-        //         ->where('follower_id', $userId)
-        //         ->exists();
-        //     $follow->is_follow = $isFollow;
-        //     return $follow;
-        // });
+        // Get the list of users the authenticated user is following
+        $followers = Follow::where('user_id', $userId)
+            ->with(['follower']) // eager load the follower relationship
+            ->orderBy('created_at', 'DESC')
+            ->get()
+            ->map(function ($follow) {
+                $follow->is_follow = true; // Add is_follow to each item
+                return $follow;
+            });
+
         return $this->success($followers, 'Data Fetch Successfully!', 200);
     }
 

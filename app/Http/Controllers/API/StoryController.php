@@ -132,27 +132,49 @@ class StoryController extends Controller
     {
         $authUser = auth()->user();
 
-        $followedUserIds = Follow::where('user_id', $authUser->id)->get()->pluck('follower_id');
-        // Get the list of blocked users.
+        // Get the list of followed users
+        $followedUserIds = Follow::where('user_id', $authUser->id)->pluck('follower_id');
+
+        // Get the list of blocked users
         $blockedUserIds = StoryBlocked::where('user_id', $authUser->id)->pluck('blocked_user_id');
 
-        // Get the list of muted users.
+        // Get the list of muted users
         $mutedUserIds = StoryMute::where('user_id', $authUser->id)->pluck('mute_user_id');
 
-        // Get the list of report users.
+        // Get the list of reported users
         $reportedUserIds = StoryReport::where('user_id', $authUser->id)->pluck('report_user_id');
 
-        $followedUsersWithStories = Story::whereIn('user_id', $followedUserIds)
-            ->whereNotIn('id', $blockedUserIds)
-            ->whereNotIn('id', $mutedUserIds)
-            ->whereNotIn('id', $reportedUserIds)
-            // ->whereHas('story')
+
+        // Fetch authenticated user's stories with pagination
+        $authUserStories = Story::where('user_id', $authUser->id)
+            ->whereNotIn('user_id', $blockedUserIds)
+            ->whereNotIn('user_id', $mutedUserIds)
+            ->whereNotIn('user_id', $reportedUserIds)
             ->with(['react.user', 'user'])
-            // ->select('id', 'name', 'avatar', 'base')
-            ->get()
-            ->groupBy('user_id');
-        return $this->success($followedUsersWithStories, 'Successfully!', 200);
+            ->orderByDesc('id') // Order by id (or created_at)
+            ->paginate(10); // Paginate results for the authenticated user's stories
+
+        // Fetch other users' stories with pagination (this example uses the same pagination)
+        $otherStories = Story::whereIn('user_id', $followedUserIds)
+            ->whereNotIn('user_id', $blockedUserIds)
+            ->whereNotIn('user_id', $mutedUserIds)
+            ->whereNotIn('user_id', $reportedUserIds)
+            ->orderByDesc('id') // Order by id or created_at
+            ->with(['react.user', 'user'])
+            ->paginate(10); // Paginate results for other users' stories
+
+        // Merge the stories, placing the authenticated user's stories first
+        $allStories = $authUserStories->merge($otherStories->items());
+
+
+        $groupedStories = collect($allStories)->groupBy('user_id');
+
+
+        return $this->success($groupedStories, 'Successfully!', 200);
     }
+
+
+
 
     public function mute($id)
     {
