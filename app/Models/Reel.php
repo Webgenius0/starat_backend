@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Reel extends Model
 {
-    protected $fillable = ['title', 'description', 'user_id', 'file_url', 'duration'];
+    protected $fillable = ['title', 'description', 'user_id', 'file_url', 'duration', 'slug'];
     public function comments()
     {
         return $this->morphMany(Comment::class, 'commentable');
@@ -15,6 +15,11 @@ class Reel extends Model
     public function getFileUrlAttribute($value)
     {
         return $value ? url($value) : null;
+    }
+
+    public function getSlugAttribute($value)
+    {
+        return $value ? url('/api/reels/reels/' . $value) : null;
     }
 
     public function bookmarks()
@@ -31,5 +36,4 @@ class Reel extends Model
     {
         return $this->morphMany(Like::class, 'likeable');
     }
-
 }

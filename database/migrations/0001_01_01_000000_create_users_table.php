@@ -28,6 +28,7 @@ return new class extends Migration
             $table->string('password');
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->boolean('is_admin')->default(0);
+            $table->enum('base',['personal','business'])->nullable();
             $table->boolean('is_varified')->default(0);
             $table->rememberToken();
             $table->timestamps();

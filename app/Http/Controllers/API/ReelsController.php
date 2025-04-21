@@ -9,6 +9,7 @@ use App\Models\Reel;
 use App\Traits\apiresponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class ReelsController extends Controller
 {
@@ -34,10 +35,10 @@ class ReelsController extends Controller
         $authUser = auth()->user();
 
         // Fetch reels with user only (no need to load their followings)
-        $data = $this->reels->with('user') // No 'user.following'
+        $data = $this->reels->with('user') 
             ->withCount(['likes', 'comments'])
             ->orderBy('created_at', 'DESC')
-            ->paginate(2);
+            ->paginate(7);
 
         $data->getCollection()->transform(function ($reel) use ($authUser) {
             // Check if the authenticated user follows the reel's user
@@ -49,11 +50,16 @@ class ReelsController extends Controller
 
             // Check if the reel is bookmarked
             $isBookmark = $reel->bookmarks
-                ->where('user_id', $authUser->id)
-                ->isNotEmpty();
-
+                ->where('user_id', $authUser->id)->isNotEmpty();
+            $bookmark_count = $reel->bookmarks->count();
+            $reel->bookmarks_count =  $bookmark_count;
             $reel->is_bookmark = $isBookmark;
+            $reel->is_likes = $reel->likes->isNotEmpty();
+
+
             unset($reel->bookmarks);
+            unset($reel->likes);
+
 
             return $reel;
         });
@@ -72,16 +78,27 @@ class ReelsController extends Controller
         if ($validator->fails()) {
             return $this->error([], $validator->errors()->first(), 422);
         }
+
+        $user = auth()->user();
+
+        $slug = Str::slug($user->name . '-' . time());
         // Store the uploaded video file
         if ($request->hasFile('reel')) {
             $reel = Helper::uploadImage($request->file('reel'), 'reels');
             $post = new $this->reels();
-            $post->user_id = auth()->user()->id;
+            $post->user_id = $user->id;
             $post->title = $request->input('title');
             $post->file_url = $reel;
+            $post->slug = $slug;
             $post->save();
             return $this->success($post, 'Reel uploaded successfully.', 200);
         }
         return $this->error([], 'Reel file is missing.', 400);
+    }
+
+    public function showBySlug($slug)
+    {
+        $story = $this->reels->where('slug', $slug)->with('user')->first();
+        return $this->success($story, 'Data Send successfully!', 200);
     }
 }

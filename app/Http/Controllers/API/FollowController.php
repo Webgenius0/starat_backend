@@ -23,7 +23,15 @@ class FollowController extends Controller
     public function following()
     {
         $userId = auth()->user()->id;
-        $followers = Follow::where('follower_id', $userId)->with(['follower'])->orderBy('created_at', 'DESC')->get();
+        $followers = Follow::where('user_id', $userId)->with(['follower'])->orderBy('created_at', 'DESC')->get();
+
+        $followers->transform(function ($follow) use ($userId) {
+            $isFollow = Follow::where('user_id', $follow->follower_id)
+                ->where('follower_id', $userId)
+                ->exists();
+            $follow->is_follow = $isFollow;
+            return $follow;
+        });
         return $this->success($followers, 'Data Fetch Successfully!', 200);
     }
 
@@ -43,19 +51,24 @@ class FollowController extends Controller
 
         $user_id = auth()->id();
         $follower_id = $request->input('follower_id');
+
         $existingFollow = Follow::where('user_id', $user_id)
             ->where('follower_id', $follower_id)
             ->first();
 
         if ($existingFollow) {
             $existingFollow->delete();
-            return $this->error([], 'Remove Following', 200);
+            $existingFollow->is_follow = false;
+            return $this->success($existingFollow, 'Unfollowed the user', 200);
         }
-        Follow::create([
+
+        $follow = Follow::create([
             'user_id' => $user_id,
             'follower_id' => $follower_id
         ]);
-        return $this->success([], 'You are now following this user', 200);
+        $follow->is_follow = true;
+
+        return $this->success($follow, 'You are now following this user', 200);
     }
 
     public function whoToFollow(Request $request)

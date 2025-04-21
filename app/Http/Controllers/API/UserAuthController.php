@@ -18,6 +18,11 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 class UserAuthController extends Controller
 {
     use apiresponse;
+
+    // public function __construct()
+    // {
+    //     $this->middleware('auth:api', ['except' => ['login']]);
+    // }
     /**
      * Register a new user.
      *
@@ -232,11 +237,26 @@ class UserAuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function logout()
+    public function logout(Request $request)
     {
-        auth()->logout();
-        return response()->json(['message' => 'Successfully logged out']);
+        try {
+            // Get token from the request
+            $token = JWTAuth::getToken();
+
+            if (!$token) {
+                return $this->error([], 'Token not provided', 400);
+            }
+
+            JWTAuth::invalidate($token);
+
+            return $this->success([], 'Successfully logged out', 200);
+        } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
+            return $this->error([], 'Token is already invalidated', 400);
+        } catch (\Exception $e) {
+            return $this->error([], 'Could not log out user', 500);
+        }
     }
+
 
     /**
      * Get the authenticated user.
@@ -282,5 +302,10 @@ class UserAuthController extends Controller
             'token_type' => 'bearer',
             'expires_in' => auth('api')->factory()->getTTL() * 60,
         ]);
+    }
+
+    public function guard()
+    {
+        return Auth::guard();
     }
 }

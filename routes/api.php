@@ -32,6 +32,8 @@ Route::controller(UserAuthController::class)->group(function () {
     Route::post('login', 'login');
     Route::post('register', 'register');
 
+    Route::post('logout', 'logout');
+
     // Resend Otp
     Route::post('resend-otp', 'resendOtp');
 
@@ -110,6 +112,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
     Route::controller(ReelsController::class)->prefix('reels')->group(function () {
         Route::post('store', 'store');
         Route::get('get', 'index');
+        Route::get('/reels/{slug}', 'showBySlug');
         Route::get('timeline', 'timeline');
     });
 
