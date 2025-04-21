@@ -132,7 +132,7 @@ class StoryController extends Controller
     {
         $authUser = auth()->user();
 
-        $followedUserIds = Follow::where('user_id', $authUser->id)->pluck('user_id');
+        $followedUserIds = Follow::where('user_id', $authUser->id)->get()->pluck('follower_id');
         // Get the list of blocked users.
         $blockedUserIds = StoryBlocked::where('user_id', $authUser->id)->pluck('blocked_user_id');
 
@@ -142,14 +142,15 @@ class StoryController extends Controller
         // Get the list of report users.
         $reportedUserIds = StoryReport::where('user_id', $authUser->id)->pluck('report_user_id');
 
-        $followedUsersWithStories = User::whereIn('id', $followedUserIds)
+        $followedUsersWithStories = Story::whereIn('user_id', $followedUserIds)
             ->whereNotIn('id', $blockedUserIds)
             ->whereNotIn('id', $mutedUserIds)
             ->whereNotIn('id', $reportedUserIds)
-            ->whereHas('story')
-            ->with(['story.react.user'])
-            ->select('id', 'name', 'avatar', 'base')
-            ->get();
+            // ->whereHas('story')
+            ->with(['react.user', 'user'])
+            // ->select('id', 'name', 'avatar', 'base')
+            ->get()
+            ->groupBy('user_id');
         return $this->success($followedUsersWithStories, 'Successfully!', 200);
     }
 

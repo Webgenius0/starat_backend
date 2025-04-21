@@ -24,14 +24,15 @@ class FollowController extends Controller
     {
         $userId = auth()->user()->id;
         $followers = Follow::where('user_id', $userId)->with(['follower'])->orderBy('created_at', 'DESC')->get();
+        $followers['is_follow'] = true;
 
-        $followers->transform(function ($follow) use ($userId) {
-            $isFollow = Follow::where('user_id', $follow->follower_id)
-                ->where('follower_id', $userId)
-                ->exists();
-            $follow->is_follow = $isFollow;
-            return $follow;
-        });
+        // $followers->transform(function ($follow) use ($userId) {
+        //     $isFollow = Follow::where('user_id', $follow->follower_id)
+        //         ->where('follower_id', $userId)
+        //         ->exists();
+        //     $follow->is_follow = $isFollow;
+        //     return $follow;
+        // });
         return $this->success($followers, 'Data Fetch Successfully!', 200);
     }
 
