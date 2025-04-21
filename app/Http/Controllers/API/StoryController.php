@@ -24,7 +24,7 @@ class StoryController extends Controller
     {
         $authUser = auth()->user();
 
-        $followedUserIds = Follow::where('follower_id', $authUser->id)->pluck('user_id');
+        $followedUserIds = Follow::where('user_id', $authUser->id)->pluck('follower_id');
 
         $followedUsersWithStories = User::whereIn('id', $followedUserIds)
             ->whereHas('story')
@@ -128,51 +128,54 @@ class StoryController extends Controller
         return $this->success($story_react, 'Successfully!', 200);
     }
 
-    public function all()
+    public function all($id)
     {
         $authUser = auth()->user();
 
-        // Get the list of followed users
+        // Get filtered user IDs (followed, not blocked, not muted, not reported)
         $followedUserIds = Follow::where('user_id', $authUser->id)->pluck('follower_id');
 
-        // Get the list of blocked users
+        if (!$followedUserIds->contains($id) && $authUser->id != $id) {
+            return $this->error([], 'You are not following this user.', 403);
+        }
+
         $blockedUserIds = StoryBlocked::where('user_id', $authUser->id)->pluck('blocked_user_id');
-
-        // Get the list of muted users
         $mutedUserIds = StoryMute::where('user_id', $authUser->id)->pluck('mute_user_id');
-
-        // Get the list of reported users
         $reportedUserIds = StoryReport::where('user_id', $authUser->id)->pluck('report_user_id');
 
-
-        // Fetch authenticated user's stories with pagination
-        $authUserStories = Story::where('user_id', $authUser->id)
+        $storyUserIds = Story::whereIn('user_id', $followedUserIds->push($authUser->id)) // include self
             ->whereNotIn('user_id', $blockedUserIds)
             ->whereNotIn('user_id', $mutedUserIds)
             ->whereNotIn('user_id', $reportedUserIds)
+            ->groupBy('user_id')
+            ->pluck('user_id')
+            ->values();
+
+        // If current user ID is the same as requested ID, start from first user in list
+        if ($authUser->id == $id) {
+            $id = $storyUserIds->first();
+        }
+
+        // Find current index
+        $currentIndex = $storyUserIds->search($id);
+
+        $nextIndex = $currentIndex + 1;
+        $prevIndex = $currentIndex - 1;
+
+        $nextUserId = $nextIndex < $storyUserIds->count() ? $storyUserIds[$nextIndex] : null;
+        $prevUserId = $prevIndex >= 0 ? $storyUserIds[$prevIndex] : null;
+
+        $otherStories = Story::where('user_id', $id)
+            ->orderByDesc('id')
             ->with(['react.user', 'user'])
-            ->orderByDesc('id') // Order by id (or created_at)
-            ->paginate(10); // Paginate results for the authenticated user's stories
+            ->get();
 
-        // Fetch other users' stories with pagination (this example uses the same pagination)
-        $otherStories = Story::whereIn('user_id', $followedUserIds)
-            ->whereNotIn('user_id', $blockedUserIds)
-            ->whereNotIn('user_id', $mutedUserIds)
-            ->whereNotIn('user_id', $reportedUserIds)
-            ->orderByDesc('id') // Order by id or created_at
-            ->with(['react.user', 'user'])
-            ->paginate(10); // Paginate results for other users' stories
-
-        // Merge the stories, placing the authenticated user's stories first
-        $allStories = $authUserStories->merge($otherStories->items());
-
-
-        $groupedStories = collect($allStories)->groupBy('user_id');
-
-
-        return $this->success($groupedStories, 'Successfully!', 200);
+        return $this->success([
+            'stories' => $otherStories,
+            'previous_user_id' => $prevUserId,
+            'next_user_id' => $nextUserId,
+        ], 'Successfully!', 200);
     }
-
 
 
 

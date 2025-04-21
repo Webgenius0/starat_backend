@@ -35,7 +35,7 @@ class ReelsController extends Controller
         $authUser = auth()->user();
 
         // Fetch reels with user only (no need to load their followings)
-        $data = $this->reels->with('user') 
+        $data = $this->reels->with('user')
             ->withCount(['likes', 'comments'])
             ->orderBy('created_at', 'DESC')
             ->paginate(7);
@@ -100,5 +100,31 @@ class ReelsController extends Controller
     {
         $story = $this->reels->where('slug', $slug)->with('user')->first();
         return $this->success($story, 'Data Send successfully!', 200);
+    }
+
+    public function shareCount(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'url' => 'required|url|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error([], $validator->errors()->first(), 422);
+        }
+
+        $url = $request->input('url');
+        $path = parse_url($url, PHP_URL_PATH);
+        $segments = explode('/', trim($path, '/'));
+        $slug = end($segments);
+
+        $reel = $this->reels->where('slug', $slug)->first();
+
+        if (!$reel) {
+            return $this->error([], 'Reel not found.', 404);
+        }
+        $reel->share = $reel->share + 1;
+        $reel->save();
+
+        return $this->success($reel, 'Share count updated');
     }
 }

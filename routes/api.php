@@ -114,6 +114,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         Route::get('get', 'index');
         Route::get('/reels/{slug}', 'showBySlug');
         Route::get('timeline', 'timeline');
+        Route::post('count', 'shareCount');
     });
 
     // All story route
@@ -125,7 +126,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         Route::get('report/{id}', 'report');
         Route::get('followers', 'followerStory');
         Route::post('react', 'react');
-        Route::get('all', 'all');
+        Route::get('all/{id}', 'all');
         Route::get('/story/{slug}', 'showBySlug');
     });
 

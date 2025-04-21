@@ -11,6 +11,39 @@ use Illuminate\Http\Request;
 class BookmarkController extends Controller
 {
     use apiresponse;
+
+    public function index(Request $request)
+    {
+        $user = auth()->user();
+
+        // Optional filter by type (post or reel)
+        $type = $request->query('type');
+
+        // Start the query from user's bookmarks
+        $query = $user->bookmarks();
+
+        // Apply filter if 'type' is provided
+        if ($type) {
+            if (!in_array($type, ['post', 'reel'])) {
+                return $this->error([], 'Invalid type. Must be "post" or "reel".', 422);
+            }
+
+            // Convert string type to full class name
+            $bookmarkableType = match ($type) {
+                'post' => Post::class,
+                'reel' => Reel::class,
+            };
+
+            $query->where('bookmarkable_type', $bookmarkableType);
+        }
+
+        // Load the bookmarked models (Post or Reel)
+        $bookmarks = $query->with('bookmarkable')->latest()->get();
+
+        return $this->success($bookmarks, 'Bookmarks fetched successfully.');
+    }
+
+
     public function store(Request $request)
     {
         $validated = $request->validate([
