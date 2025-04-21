@@ -132,50 +132,50 @@ class StoryController extends Controller
     {
         $authUser = auth()->user();
 
-        // Get filtered user IDs (followed, not blocked, not muted, not reported)
+        // Step 1: Get all the users the auth user follows
         $followedUserIds = Follow::where('user_id', $authUser->id)->pluck('follower_id');
-
-        if (!$followedUserIds->contains($id) && $authUser->id != $id) {
-            return $this->error([], 'You are not following this user.', 403);
-        }
-
         $blockedUserIds = StoryBlocked::where('user_id', $authUser->id)->pluck('blocked_user_id');
         $mutedUserIds = StoryMute::where('user_id', $authUser->id)->pluck('mute_user_id');
         $reportedUserIds = StoryReport::where('user_id', $authUser->id)->pluck('report_user_id');
 
-        $storyUserIds = Story::whereIn('user_id', $followedUserIds->push($authUser->id)) // include self
-            ->whereNotIn('user_id', $blockedUserIds)
-            ->whereNotIn('user_id', $mutedUserIds)
-            ->whereNotIn('user_id', $reportedUserIds)
+        // Step 3: Create final valid user list
+        $validUserIds = $followedUserIds
+            ->diff($blockedUserIds)
+            ->diff($mutedUserIds)
+            ->diff($reportedUserIds)
+            ->push($authUser->id) // always include self
+            ->unique();
+
+        // Step 4: Only take users who actually have stories
+        $storyUserIds = Story::whereIn('user_id', $validUserIds)
             ->groupBy('user_id')
+            ->orderByRaw('MAX(created_at) DESC') // recent first
             ->pluck('user_id')
             ->values();
 
-        // If current user ID is the same as requested ID, start from first user in list
-        if ($authUser->id == $id) {
-            $id = $storyUserIds->first();
+        // Step 5: Security check - if user is not in valid story list
+        if (!$storyUserIds->contains($id)) {
+            return $this->error([], 'You are not allowed to view this story.', 403);
         }
 
-        // Find current index
+        // Step 6: Get previous & next user ID
         $currentIndex = $storyUserIds->search($id);
+        $nextUserId = ($currentIndex + 1 < $storyUserIds->count()) ? $storyUserIds[$currentIndex + 1] : null;
+        $prevUserId = ($currentIndex - 1 >= 0) ? $storyUserIds[$currentIndex - 1] : null;
 
-        $nextIndex = $currentIndex + 1;
-        $prevIndex = $currentIndex - 1;
-
-        $nextUserId = $nextIndex < $storyUserIds->count() ? $storyUserIds[$nextIndex] : null;
-        $prevUserId = $prevIndex >= 0 ? $storyUserIds[$prevIndex] : null;
-
+        // Step 7: Get all stories of the selected user
         $otherStories = Story::where('user_id', $id)
             ->orderByDesc('id')
             ->with(['react.user', 'user'])
             ->get();
 
         return $this->success([
-            'stories' => $otherStories,
-            'previous_user_id' => $prevUserId,
-            'next_user_id' => $nextUserId,
+            'stories' => $otherStories,             // all stories of clicked user          // full list of story owners
+            'previous_user_id' => $prevUserId ?? 0,
+            'next_user_id' => $nextUserId ?? 0,
         ], 'Successfully!', 200);
     }
+
 
 
 
