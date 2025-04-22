@@ -16,18 +16,25 @@ class CommentController extends Controller
     use apiresponse;
     public function index($type, $id)
     {
-        $query = Comment::query();
-        if ($type == 'post') {
-            $query->where('commentable_type', Post::class);
-        } elseif ($type == 'reel') {
-            $query->where('commentable_type', Reel::class);
-        } else {
-            return $this->error([], 'Type Not Metch!');
+        $typesMap = [
+            'post' => \App\Models\Post::class,
+            'reel' => \App\Models\Reel::class,
+        ];
+
+        if (!array_key_exists($type, $typesMap)) {
+            return $this->error([], 'Invalid commentable type.');
         }
-        $comments = $query->where('user_id', auth()->user()->id)->with('commentable')->get();
+
+        $commentableClass = $typesMap[$type];
+
+        $comments = Comment::where('commentable_type', $commentableClass)
+            ->where('commentable_id', $id)
+            ->with('user')
+            ->get();
 
         return $this->success($comments, 'Comments fetched successfully!', 200);
     }
+
 
     public function store(Request $request)
     {
