@@ -14,15 +14,17 @@ use Illuminate\Support\Facades\Validator;
 class CommentController extends Controller
 {
     use apiresponse;
-    public function index(Request $request)
+    public function index($type, $id)
     {
         $query = Comment::query();
-        if ($request->type == 'post') {
+        if ($type == 'post') {
             $query->where('commentable_type', Post::class);
-        } elseif ($request->type == 'reel') {
+        } elseif ($type == 'reel') {
             $query->where('commentable_type', Reel::class);
+        } else {
+            return $this->error([], 'Type Not Metch!');
         }
-        $comments = $query->where('user_id', auth()->user()->id)->get();
+        $comments = $query->where('user_id', auth()->user()->id)->with('commentable')->get();
 
         return $this->success($comments, 'Comments fetched successfully!', 200);
     }

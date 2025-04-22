@@ -72,7 +72,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
     // All comment route
     Route::controller(CommentController::class)->prefix('comment')->group(function () {
         Route::post('store', 'store');
-        Route::get('get', 'index');
+        Route::get('get/{type}/{id}', 'index');
     });
 
     // All Repost route
