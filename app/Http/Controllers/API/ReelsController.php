@@ -38,7 +38,7 @@ class ReelsController extends Controller
         $data = $this->reels->with('user')
             ->withCount(['likes', 'comments'])
             ->orderBy('created_at', 'DESC')
-            ->paginate(7);
+            ->paginate(5);
 
         $data->getCollection()->transform(function ($reel) use ($authUser) {
             // Check if the authenticated user follows the reel's user
