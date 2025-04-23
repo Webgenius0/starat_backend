@@ -35,11 +35,9 @@ class PostController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            // 'user_id' => 'required|exists:users,id',
             'title' => 'required|string',
             'description' => 'required|string',
             'image' => 'required|image', // Ensure the uploaded file is an image
-            'tag' => 'nullable|array'
         ]);
 
         if ($validator->fails()) {
@@ -49,37 +47,36 @@ class PostController extends Controller
                 'errors' => $validator->errors()
             ], 422);
         }
+
         // Get the authenticated user
         $user = auth()->user();
 
-        if ($request->image) {
+        // Upload the image
+        $image_url = null;
+        if ($request->hasFile('image')) {
             $image_url = Helper::uploadImage($request->image, 'post');
         }
 
-        // $user->notify(new Notify('This is a test notification!'));
-
-        // $user = User::find(1);
-        // $notifications = $user->notifications; // Get all notifications
-
-        // foreach ($notifications as $notification) {
-        //     echo $notification->data['message'];
-        // }
-
+        // Create the post
         $post = Post::create([
             'user_id' => $user->id,
             'title' => $request->title,
             'description' => $request->description,
             'file_url' => $image_url,
         ]);
-        if ($request->tags) {
-            foreach ($request->tags as $tag) {
-                $tag = Tag::create([
-                    'post_id' => $post->id,
-                    'text' => $tag
-                ]);
-            }
+
+        // Extract hashtags from description
+        preg_match_all('/#(\w+)/', $request->description, $matches);
+        $hashtags = $matches[1];
+
+        foreach ($hashtags as $tagText) {
+            Tag::create([
+                'post_id' => $post->id,
+                'text' => $tagText
+            ]);
         }
-        return $this->success($post, 'Comment added successfully!', 201);
+
+        return $this->success($post, 'Post created successfully!', 201);
     }
 
     public function forYou(Request $request)

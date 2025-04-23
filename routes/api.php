@@ -128,6 +128,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         Route::post('react', 'react');
         Route::get('all/{id}', 'all');
         Route::get('/story/{slug}', 'showBySlug');
+        Route::get('/react/show/{id}', 'reactShow');
     });
 
     // All Chat route

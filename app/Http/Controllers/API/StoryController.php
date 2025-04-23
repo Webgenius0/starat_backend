@@ -24,17 +24,29 @@ class StoryController extends Controller
     {
         $authUser = auth()->user();
 
+        // Step 1: Get all the users the auth user follows
         $followedUserIds = Follow::where('user_id', $authUser->id)->pluck('follower_id');
+        $blockedUserIds = StoryBlocked::where('user_id', $authUser->id)->pluck('blocked_user_id');
+        $mutedUserIds = StoryMute::where('user_id', $authUser->id)->pluck('mute_user_id');
+        $reportedUserIds = StoryReport::where('user_id', $authUser->id)->pluck('report_user_id');
 
-        $followedUsersWithStories = User::whereIn('id', $followedUserIds)
-            ->whereHas('story')
+        // Step 2: Create final valid user list (include self)
+        $validUserIds = $followedUserIds
+            ->diff($blockedUserIds)
+            ->diff($mutedUserIds)
+            ->diff($reportedUserIds)
+            ->push($authUser->id) // always include self
+            ->unique();
+
+        // Step 3: Get users with at least one story
+        $usersWithStories = User::whereIn('id', $validUserIds)
+            ->whereHas('story') // ensure they have at least one story
             ->with(['story' => function ($query) {
-                $query->latest()->take(1);
+                $query->latest()->take(1); // only get latest story
             }])
             ->select('id', 'name')
             ->get()
             ->map(function ($user) use ($authUser) {
-                // Attach is_me field to each story
                 $user->story = $user->story->map(function ($story) use ($authUser, $user) {
                     $story->is_me = $user->id === $authUser->id;
                     return $story;
@@ -42,28 +54,21 @@ class StoryController extends Controller
                 return $user;
             });
 
-        // Fetch the authenticated user's latest story
-        $myStory = $authUser->story()->latest()->first();
+        // Step 4: Separate out your story to put it at the top (only if it exists)
+        $myStory = $usersWithStories->firstWhere('id', $authUser->id);
+        $usersWithStories = $usersWithStories->reject(fn($user) => $user->id === $authUser->id);
 
+        $result = collect();
         if ($myStory) {
-            $myStory->is_me = true; // Add is_me = true
-            $myData = [
-                'id' => $authUser->id,
-                'name' => $authUser->name,
-                'story' => [$myStory],
-            ];
-        } else {
-            $myData = null;
+            $result->push($myStory); // add your story first
         }
 
-        // Prepend own story (if exists) to the beginning of the collection
-        $result = collect($followedUsersWithStories);
-        if ($myData) {
-            $result->prepend((object) $myData);
-        }
+        $result = $result->merge($usersWithStories); // followed users' stories follow
 
         return $this->success($result->values(), 'Data Fetched Successfully!', 200);
     }
+
+
 
 
 
@@ -110,7 +115,7 @@ class StoryController extends Controller
         $validator = Validator::make($request->all(), [
             // 'user_id' => 'required|exists:users,id',
             'story_id' => 'required|string',
-            'react' => 'nullable|in:love,haha',
+            'react' => 'nullable|in:angry,wow,sad,care,funny,love,like',
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -166,17 +171,55 @@ class StoryController extends Controller
         // Step 7: Get all stories of the selected user
         $otherStories = Story::where('user_id', $id)
             ->orderByDesc('id')
-            ->with(['react.user', 'user'])
+            ->with(['user'])
             ->get();
 
         return $this->success([
-            'stories' => $otherStories,             // all stories of clicked user          // full list of story owners
+            'stories' => $otherStories,
             'previous_user_id' => $prevUserId ?? 0,
             'next_user_id' => $nextUserId ?? 0,
         ], 'Successfully!', 200);
     }
 
 
+    public function reactShow($id)
+    {
+        // Check if the authenticated user owns this story
+        $story = Story::find($id);
+
+        if (!$story) {
+            return $this->error([], 'Story not found', 404);
+        }
+
+        if ($story->user_id !== auth()->id()) {
+            return $this->error([], 'Unauthorized access', 403);
+        }
+        // Fetch all reactions for the story with user info
+        $reactions = StoryReact::where('story_id', $id)
+            ->with('user')
+            ->orderByDesc('id')
+            ->get();
+
+        // Group by user_id
+        $groupedReacts = $reactions->groupBy('user_id')->map(function ($userReactions, $userId) {
+            $user = $userReactions->first()->user;
+
+            // Remove user info from each reaction
+            $userReactions->each(function ($reaction) {
+                unset($reaction->user);
+            });
+
+            return [
+                'user' => [
+                    'avatar' => $user->avatar,
+                    'name' => $user->name
+                ],
+                'reactions' => $userReactions->values()
+            ];
+        });
+
+        return $this->success($groupedReacts->values(), 'Data Fetch success', 200);
+    }
 
 
     public function mute(Request $request)
