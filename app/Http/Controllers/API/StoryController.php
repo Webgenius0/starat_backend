@@ -244,7 +244,8 @@ class StoryController extends Controller
             ->first();
 
         if ($existingMute) {
-            return $this->error([], 'User is already muted.');
+            $existingMute->delete();
+            return $this->success([], 'User removed to mute.', 200);
         }
         $data = StoryMute::create([
             'user_id' => auth()->user()->id,
@@ -278,7 +279,8 @@ class StoryController extends Controller
             ->first();
 
         if ($existingMute) {
-            return $this->error([], 'User is already blocked.');
+            $existingMute->delete();
+            return $this->success([], 'User removed to blocked.', 200);
         }
         $data = StoryBlocked::create([
             'user_id' => auth()->user()->id,
@@ -311,7 +313,8 @@ class StoryController extends Controller
             ->first();
 
         if ($existingMute) {
-            return $this->error([], 'User is already report.');
+            $existingMute->delete();
+            return $this->success([], 'Remove user to report', 200);
         }
 
         // Create the mute record
