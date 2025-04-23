@@ -179,15 +179,25 @@ class StoryController extends Controller
 
 
 
-    public function mute($id)
+    public function mute(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'mute_id' => 'required|integer',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
         // Check if the user is trying to mute themselves
-        if (auth()->user()->id == $id) {
+        if (auth()->user()->id == $request->mute_id) {
             return $this->error([], 'You cannot mute yourself.');
         }
         // Check if the mute already exists
         $existingMute = StoryMute::where('user_id', auth()->user()->id)
-            ->where('mute_user_id', $id)
+            ->where('mute_user_id', $request->mute_id)
             ->first();
 
         if ($existingMute) {
@@ -195,22 +205,33 @@ class StoryController extends Controller
         }
         $data = StoryMute::create([
             'user_id' => auth()->user()->id,
-            'mute_user_id' => $id,
+            'mute_user_id' => $request->mute_id,
         ]);
 
-        return $this->success([], 'User muted successfully.');
+        return $this->success($data, 'User muted successfully.');
     }
 
 
-    public function block($id)
+    public function block(Request $request)
     {
+
+        $validator = Validator::make($request->all(), [
+            'block_id' => 'required|integer',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
         // Check if the user is trying to mute themselves
-        if (auth()->user()->id == $id) {
+        if (auth()->user()->id == $request->block_id) {
             return $this->error([], 'You cannot blocked yourself.');
         }
         // Check if the mute already exists
         $existingMute = StoryBlocked::where('user_id', auth()->user()->id)
-            ->where('blocked_user_id', $id)
+            ->where('blocked_user_id', $request->block_id)
             ->first();
 
         if ($existingMute) {
@@ -218,22 +239,32 @@ class StoryController extends Controller
         }
         $data = StoryBlocked::create([
             'user_id' => auth()->user()->id,
-            'blocked_user_id' => $id,
+            'blocked_user_id' => $request->block_id,
         ]);
 
-        return $this->success([], 'User Blocked successfully.');
+        return $this->success($data, 'User Blocked successfully.');
     }
 
-    public function report($id)
+    public function report(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'report_id' => 'required|integer',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
         // Check if the user is trying to mute themselves
-        if (auth()->user()->id == $id) {
+        if (auth()->user()->id == $request->report_id) {
             return $this->error([], 'You cannot report yourself.');
         }
 
         // Check if the mute already exists
         $existingMute = StoryReport::where('user_id', auth()->user()->id)
-            ->where('report_user_id', $id)
+            ->where('report_user_id', $request->report_id)
             ->first();
 
         if ($existingMute) {
@@ -243,9 +274,9 @@ class StoryController extends Controller
         // Create the mute record
         $data = StoryMute::create([
             'user_id' => auth()->user()->id,
-            'report_user_id ' => $id,
+            'report_user_id ' => $request->report_id,
         ]);
 
-        return $this->success([], 'User report successfully.');
+        return $this->success($data, 'User report successfully.');
     }
 }

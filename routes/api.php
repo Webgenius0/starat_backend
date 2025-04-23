@@ -121,9 +121,9 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
     Route::controller(StoryController::class)->prefix('story')->group(function () {
         Route::post('store', 'store');
         Route::get('get', 'index');
-        Route::get('mute/{id}', 'mute');
-        Route::get('block/{id}', 'block');
-        Route::get('report/{id}', 'report');
+        Route::post('mute', 'mute');
+        Route::post('block', 'block');
+        Route::post('report', 'report');
         Route::get('followers', 'followerStory');
         Route::post('react', 'react');
         Route::get('all/{id}', 'all');
