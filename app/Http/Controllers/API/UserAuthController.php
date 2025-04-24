@@ -228,9 +228,27 @@ class UserAuthController extends Controller
 
         // $token = JWTAuth::fromUser($user);
 
-        return $this->success([], 'OTP validated successfully. Your account is now verified.', 200);
+        return $this->success([], 'OTP verified successfully', 200);
     }
 
+
+    public function registerCheckOTP(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'otp' => 'required|digits:6',
+        ]);
+        if ($validator->fails()) {
+            return $this->error([], $validator->errors()->first(), 422);
+        }
+
+        $user = User::where('email', $request->email)->first();
+        $user->is_varified = now();
+        $user->otp = null;
+        $user->save();
+
+        return $this->success([], 'OTP validated successfully. Your account is now verified.', 200);
+    }
 
     /**
      * Log out the user (Invalidate the token).

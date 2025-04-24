@@ -19,10 +19,11 @@
                         <div class="card mb-0">
                             <div class="card-body">
                                 <a href="javascript:void(0);"
-                                    class="brand-logo d-flex align-items-center justify-content-center">
+                                    class="brand-logo d-flex flex-column align-items-center justify-content-center text-center">
                                     <img src="{{ asset($setting->logo ?? 'backend/app-assets/images/logo/logo.png') }}"
                                         width="150" alt="logo">
-                                    <h2 class="brand-text text-primary ml-1">{{ $setting->title ?? 'Prayer App' }}</h2>
+                                    <h2 class="brand-text text-primary mt-1">{{ $setting->company_name ?? 'Prayer App' }}
+                                    </h2>
                                 </a>
 
                                 <form class="auth-login-form mt-2" action="{{ route('admin.login') }}" method="POST">
@@ -30,8 +31,8 @@
                                     <div class="form-group">
                                         <label for="login-email" class="form-label">Email</label>
                                         <input type="text" class="form-control" id="email" name="email"
-                                            placeholder="john@example.com" value="{{ old('email') }}" aria-describedby="login-email" tabindex="1"
-                                            autofocus />
+                                            placeholder="john@example.com" value="{{ old('email') }}"
+                                            aria-describedby="login-email" tabindex="1" autofocus />
                                         @if ($errors->has('email'))
                                             <span class="text-danger">
                                                 {{ $errors->first('email') }}

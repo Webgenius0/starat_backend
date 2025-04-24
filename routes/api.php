@@ -31,6 +31,7 @@ use PhpOffice\PhpSpreadsheet\Calculation\TextData\Search;
 Route::controller(UserAuthController::class)->group(function () {
     Route::post('login', 'login');
     Route::post('register', 'register');
+    Route::post('register-verify-otp', 'registerCheckOTP');
 
     Route::post('logout', 'logout');
 
@@ -53,7 +54,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
 
     Route::delete('/delete/user', [UserController::class, 'deleteUser']);
 
-    Route::post('change-password', [UserController::class, 'changePassword']);
+    // Route::post('change-password', [UserController::class, 'changePassword']);
     Route::post('user-update', [UserController::class, 'updateUserInfo']);
 
     // All post route
