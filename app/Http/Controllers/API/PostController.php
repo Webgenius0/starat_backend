@@ -26,12 +26,27 @@ class PostController extends Controller
         if ($request->user_id) {
             $user_id = $request->user_id;
         }
-        $post = Post::where('user_id', $user_id)
-            ->with(['comments', 'likes', 'tags', 'user'])
-            ->orderBy('created_at', 'DESC')
-            ->paginate(7);
+        // Get paginated posts
+        $posts = Post::where('user_id', $user_id)
+            ->with(['user', 'tags'])
+            ->withCount(['likes', 'comments', 'repost'])
+            ->with(['bookmarks' => function ($q) use ($user_id) {
+                $q->where('user_id', $user_id);
+            }])
+            ->latest()
+            ->paginate(5);
 
-        return $this->success($post, 'Comment fetch successfully!', 200);
+        // Add bookmark status
+        $posts->getCollection()->transform(function ($post) {
+            $post->is_bookmarked = $post->bookmarks->isNotEmpty();
+            $post->is_repost = $post->repost->isNotEmpty();
+            $post->is_likes = $post->likes->isNotEmpty();
+            unset($post->repost);
+            unset($post->bookmarks);
+            unset($post->likes);
+            return $post;
+        });
+        return $this->success( $posts, 'Comment fetch successfully!', 200);
     }
     public function store(Request $request)
     {
