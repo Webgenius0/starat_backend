@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class UserAuthController extends Controller
 {
@@ -306,28 +307,33 @@ class UserAuthController extends Controller
      */
     public function profileMe(Request $request)
     {
-        $user = auth()->user();
+        try {
+            $user = auth()->user();
 
-        if ($request->user_id) {
-            $user = User::find($request->user_id);
+            if ($request->filled('user_id') && $request->user_id != $user->id) {
+                $user = User::findOrFail($request->user_id);
+            }
+
+            $response = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'avatar' => $user->avatar ?? null,
+                'cover_image' => $user->cover_image ?? null,
+                'username' => $user->username,
+                'joined' => 'Joined ' . $user->created_at->format('M Y'),
+                'follower' => $user->followers()->count(),
+                'following' => $user->following()->count(),
+                'post' => $user->posts()->count(),
+            ];
+
+            return $this->success([
+                'user' => $response,
+            ], 'User retrieved successfully', 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->error('User not found', 404);
         }
-
-        $response = [
-            'id' => $user->id,
-            'name' => $user->name,
-            'avatar' => $user->avatar,
-            'cover_image' => $user->cover_image,
-            'username' => $user->username,
-            'joined' => 'Joined ' . $user->created_at->format('M Y'),
-            'follower' => $user->followers()->count(),
-            'following' => $user->following()->count(),
-            'post' => $user->posts()->count(),
-        ];
-
-        return $this->success([
-            'user' => $response,
-        ], 'User retrieved successfully', 200);
     }
+
 
 
     /**
