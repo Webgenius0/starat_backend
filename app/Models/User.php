@@ -56,6 +56,11 @@ class User extends Authenticatable implements JWTSubject
     {
         return $value ? url($value) : null;
     }
+    public function getCoverImageAttribute($value)
+    {
+        return $value ? url($value) : null;
+    }
+
 
     public function comments()
     {

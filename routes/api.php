@@ -56,7 +56,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
     Route::delete('/delete/user', [UserController::class, 'deleteUser']);
 
     // Route::post('change-password', [UserController::class, 'changePassword']);
-    Route::post('user-update', [UserController::class, 'updateUserInfo']);
+    Route::post('profile-update', [UserController::class, 'updateUserInfo']);
 
     // All post route
     Route::controller(PostController::class)->prefix('post')->group(function () {
@@ -114,7 +114,8 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
 
     // All Post Tags
     Route::controller(TagsController::class)->prefix('tags')->group(function () {
-        Route::get('get', 'index');
+        Route::post('get', 'index');
+        Route::post('suggested', 'suggestedFollwer');
     });
 
     // All Reels 

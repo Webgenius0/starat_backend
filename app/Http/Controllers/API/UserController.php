@@ -23,62 +23,77 @@ class UserController extends Controller
      */
     public function updateUserInfo(Request $request)
     {
+        // Validate the incoming request data
         $validation = Validator::make($request->all(), [
+            'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', 'unique:users,username,' . Auth::id()],
-            'language' => ['required', 'string', 'in:en,ar'],
-            'city' => ['nullable', 'string', 'max:50'],
-            'state' => ['nullable', 'string', 'max:50'],
-            'images' => ['nullable', 'array'],
-            'images.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            'age' => ['nullable', 'integer', 'min:14'],
+            'location' => ['nullable', 'string', 'max:50'],
+            'website' => ['nullable', 'string', 'max:50'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'], // Single profile image
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'], // Single cover image
             'phone' => ['nullable', 'string'],
             'bio' => ['nullable', 'string'],
         ]);
 
+        // If validation fails, return errors
         if ($validation->fails()) {
-            return $this->error([], $validation->errors(), 500);
+            return $this->error([], $validation->errors(), 422);
         }
 
+        // Start a database transaction to ensure atomicity
         DB::beginTransaction();
         $user = Auth::user();
+
         try {
-            $user = Auth::user();
-
+            // Update the user's general information (name, username, location, etc.)
             $user->update($request->only([
-                    'username',
-                    'email',
-                    'password',
-                    'language',
-                    'city',
-                    'state',
-                    'age',
-                    'phone',
-                    'bio',
-                ]));
+                'name',  // 'name' is the username
+                'username',  // The actual username field
+                'location',
+                'website',
+                'phone',
+                'bio',
+            ]));
 
-            if ($request->hasFile('images')) {
-                $userImages = [];
-                foreach ($request->file('images') as $image) {
-                    $url = Helper::fileUpload($image, 'users', $user->username . "-" . time());
-                    array_push($userImages, [
-                        'image' => $url
-                    ]);
-                }
-                $user->images()->delete();
-                $user->images()->createMany($userImages);
+            // Handle the profile image upload (only one image)
+            if ($request->hasFile('avatar')) {
+                $filePath = Helper::uploadImage($request->file('avatar'), 'users', $user->avatar ?? null);
+                $user->avatar = $filePath;
+                $user->save();
             }
 
+            // Handle the cover image upload (only one image)
+            if ($request->hasFile('cover_image')) {
+                $coverImagePath = Helper::uploadImage($request->file('cover_image'), 'users/covers', $user->cover_image);
+                $user->cover_image = $coverImagePath;
+                $user->save();
+            }
+
+            // Commit the transaction if everything is successful
             DB::commit();
 
+            // Return success response with updated user data
             return $this->success([
-                'user' => $user,
+                'user' => [
+                    'username' => $user->username,
+                    'location' => $user->location,
+                    'website' => $user->website,
+                    'avatar' => $user->avatar, // The user's profile image
+                    'cover_image' => $user->cover_image, // The user's cover image
+                    'phone' => $user->phone,
+                    'bio' => $user->bio,
+                ],
             ], 'User updated successfully', 200);
-
         } catch (\Exception $e) {
+            // Rollback the transaction if something goes wrong
             DB::rollBack();
             return $this->error([], $e->getMessage(), 400);
         }
     }
+
+
+
+
 
     /**
      * Change Password
@@ -96,8 +111,7 @@ class UserController extends Controller
             return $this->error([], $validation->errors(), 500);
         }
 
-        try
-        {
+        try {
             $user = User::where('id', Auth::id())->first();
             if (password_verify($request->old_password, $user->password)) {
                 $user->password = Hash::make($request->new_password);
@@ -140,6 +154,5 @@ class UserController extends Controller
         } else {
             return $this->error("User not found", 404);
         }
-
     }
 }

@@ -6,6 +6,7 @@ use App\Helper\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use App\Models\Follow;
+use App\Models\Mention;
 use App\Models\Post;
 use App\Models\Reel;
 use App\Models\Tag;
@@ -26,7 +27,7 @@ class PostController extends Controller
             $user_id = $request->user_id;
         }
         $post = Post::where('user_id', $user_id)
-            ->with(['comments', 'likes', 'tags'])
+            ->with(['comments', 'likes', 'tags', 'user'])
             ->orderBy('created_at', 'DESC')
             ->paginate(7);
 
@@ -35,11 +36,12 @@ class PostController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'title' => 'required|string',
-            'description' => 'required|string',
-            'image' => 'required|image', // Ensure the uploaded file is an image
+            'title' => 'nullable|string',  // Title is no longer required
+            'description' => 'nullable|string',  // Description is optional but can be provided
+            'image' => 'nullable|image',  // Image is optional but can be provided
         ]);
 
+        // Check if validation fails
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
@@ -51,13 +53,13 @@ class PostController extends Controller
         // Get the authenticated user
         $user = auth()->user();
 
-        // Upload the image
+        // Upload the image (only if image is provided)
         $image_url = null;
         if ($request->hasFile('image')) {
             $image_url = Helper::uploadImage($request->image, 'post');
         }
 
-        // Create the post
+        // Create the post (title, description, and image_url are optional)
         $post = Post::create([
             'user_id' => $user->id,
             'title' => $request->title,
@@ -65,10 +67,11 @@ class PostController extends Controller
             'file_url' => $image_url,
         ]);
 
-        // Extract hashtags from description
+        // Extract hashtags from description if it exists
         preg_match_all('/#(\w+)/', $request->description, $matches);
         $hashtags = $matches[1];
 
+        // Store hashtags
         foreach ($hashtags as $tagText) {
             Tag::create([
                 'post_id' => $post->id,
@@ -76,8 +79,29 @@ class PostController extends Controller
             ]);
         }
 
+        // Extract mentions from description if it exists
+        preg_match_all('/@(\w+)/', $request->description, $mentionMatches);
+        $mentions = $mentionMatches[1];
+
+        // Store mentions (associating with users)
+        foreach ($mentions as $mentionText) {
+            // Find user by their username or slug (you might need to adjust this based on your user model)
+            $mentionedUser = User::where('username', $mentionText)->first();
+
+            // If a user is found, store the mention
+            if ($mentionedUser) {
+                Mention::create([
+                    'post_id' => $post->id,
+                    'user_id' => auth()->user()->id,
+                    'mentioned_id' => $mentionedUser->id, // The user who created the post
+                ]);
+            }
+        }
+
         return $this->success($post, 'Post created successfully!', 201);
     }
+
+
 
     public function forYou(Request $request)
     {

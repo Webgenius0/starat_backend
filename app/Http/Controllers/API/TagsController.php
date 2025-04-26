@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Follow;
 use App\Models\Tag;
+use App\Models\User;
 use App\Traits\apiresponse;
 use Illuminate\Http\Request;
 use function Laravel\Prompts\select;
@@ -17,9 +19,37 @@ class TagsController extends Controller
     {
         $this->tag = $tag;
     }
-    public function index()
+    public function index(Request $request)
     {
-        $tags = $this->tag->select('text')->distinct()->get();
-        return $this->success($tags, 'Data Fetch Successfully!', 200);
+        $keyword = $request->input('keyword');
+
+        $tags = $this->tag
+            ->select('text')
+            ->when($keyword, function ($query, $keyword) {
+                $query->where('text', 'like', '%' . $keyword . '%');
+            })
+            ->distinct()
+            ->get();
+
+        return $this->success($tags, 'Tags fetched successfully!', 200);
+    }
+
+    public function suggestedFollwer(Request $request)
+    {
+        $keyword = $request->input('keyword');
+
+        $suggestedUsers = User::where('id', '!=', auth()->id())
+            ->whereNotIn('id', function ($query) {
+                $query->select('follower_id')
+                    ->from('follows')
+                    ->where('user_id', auth()->id());
+            })
+            ->when($keyword, function ($query, $keyword) {
+                $query->where('name', 'like', '%' . $keyword . '%');
+            })
+            ->select('id', 'name')
+            ->get();
+
+        return $this->success($suggestedUsers, 'Suggestions fetched successfully!', 200);
     }
 }
