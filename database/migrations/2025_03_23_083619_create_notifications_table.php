@@ -14,11 +14,11 @@ return new class extends Migration {
             $table->id();
             $table->unsignedBigInteger('user_id')->nullable();
             $table->string('title');
+            $table->morphs('notificationable');
             $table->text('message');
             $table->boolean('is_read')->default(false);
             $table->timestamps();
         });
-
     }
 
     /**

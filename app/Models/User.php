@@ -147,4 +147,9 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->belongsToMany(Post::class, 'reposts', 'user_id', 'post_id')->withTimestamps();
     }
+
+    public function notifications()
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
+    }
 }

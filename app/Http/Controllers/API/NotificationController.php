@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\FcmToken;
 use App\Models\Notification;
+use App\Models\User;
 use App\Services\FirebaseService;
 use App\Traits\apiresponse;
 use Illuminate\Http\Request;
@@ -55,11 +56,13 @@ class NotificationController extends Controller
             $this->firebaseService->sendNotification($request->title, $request->body, $tokens);
         }
 
-        Notification::create([
-            'user_id' => $request->user_id,
-            'title' => $request->title,
-            'message' => $request->body,
-        ]);
+        if ($request->user_id) {
+            $user = User::find($request->user_id);
+            $user->notifications()->create([
+                'title' => $request->title,
+                'message' => $request->body,
+            ]);
+        }
 
         return $this->success([], 'Notification sent successfully', 200);
     }
@@ -85,7 +88,4 @@ class NotificationController extends Controller
 
         return response()->json(['message' => 'Notification settings updated']);
     }
-
-
-    
 }
