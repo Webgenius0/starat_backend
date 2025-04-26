@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Exceptions\JWTException;
 
 class UserAuthController extends Controller
 {
@@ -68,24 +69,36 @@ class UserAuthController extends Controller
 
     public function login(Request $request)
     {
-        //dd($request);
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string|min:6'
+        ]);
+
         $credentials = $request->only('email', 'password');
 
-        // Attempt to log the user in
-        if (!$token = JWTAuth::attempt($credentials)) {
-            return $this->error([], 'Invalid credentials', 401);
+        try {
+            if (!$token = JWTAuth::attempt($credentials)) {
+                return $this->error([], 'Invalid credentials.', 401);
+            }
+        } catch (JWTException $e) {
+            return $this->error([], 'Could not create token.', 500);
         }
 
-        $user = Auth::user();
-        // if ($user->email_verified_at == null) {
-        //     $this->generateOtp($user);
-        //     return $this->error([], 'Check your email to verify your account', 401);
-        // }
+        $user = auth()->user();
+
+        if (is_null($user->email_verified_at)) {
+            return $this->error([], 'Please verify your email address.', 401);
+        }
+
+        if ($user->status === 'inactive') {
+            return $this->error([], 'Your account is inactive. Please contact the administrator.', 401);
+        }
 
         return $this->success([
-            'token' => $token
+            'token' => $token,
         ], 'User logged in successfully.', 200);
     }
+
 
     /**
      * Google Login
@@ -115,11 +128,7 @@ class UserAuthController extends Controller
         ], 'User logged in successfully.', 200);
     }
 
-    /**
-     * Forget Password Controller
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
+
     public function forgetPassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -181,19 +190,33 @@ class UserAuthController extends Controller
     // Resend Otp
     public function resendOtp(Request $request)
     {
+        // Validate the email
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
         ]);
+
         if ($validator->fails()) {
             return $this->error([], $validator->errors()->first(), 422);
         }
+
+        // Find user by email
         $user = User::where('email', $request->email)->first();
+
         if (!$user) {
             return $this->error([], 'User not found', 404);
         }
-        $this->generateOtp($user);
-        return $this->success([], 'Check Your Email for Password Reset Otp', 200);
+
+        // Generate and save new OTP
+        $otp = $this->generateOtp();
+        $user->otp = $otp;
+        $user->save();
+
+        // Send OTP notification
+        $user->notify(new OtpNotification($otp));
+
+        return $this->success([], 'Check your email for the password reset OTP.', 200);
     }
+
 
     /**
      * Varify User Otp
@@ -281,12 +304,31 @@ class UserAuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function me()
+    public function profileMe(Request $request)
     {
+        $user = auth()->user();
+
+        if ($request->user_id) {
+            $user = User::find($request->user_id);
+        }
+
+        $response = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'avatar' => $user->avatar,
+            'cover_image' => $user->cover_image,
+            'username' => $user->username,
+            'joined' => 'Joined ' . $user->created_at->format('M Y'),
+            'follower' => $user->followers()->count(),
+            'following' => $user->following()->count(),
+            'post' => $user->posts()->count(),
+        ];
+
         return $this->success([
-            'user' => Auth::user()->load('images'),
+            'user' => $response,
         ], 'User retrieved successfully', 200);
     }
+
 
     /**
      * Refresh a token.

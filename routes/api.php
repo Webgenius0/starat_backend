@@ -16,6 +16,7 @@ use App\Http\Controllers\API\RemainderController;
 use App\Http\Controllers\API\ReportUserController;
 use App\Http\Controllers\API\SocialmediaController;
 use App\Http\Controllers\API\StoryController;
+use App\Http\Controllers\API\TagsController;
 use App\Http\Controllers\API\UserAuthController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\VideoUploadController;
@@ -49,7 +50,7 @@ Route::controller(UserAuthController::class)->group(function () {
 
 Route::group(['middleware' => ['jwt.verify', 'user']], function () {
     Route::post('logout', [UserAuthController::class, 'logout']);
-    Route::get('me', [UserAuthController::class, 'me']);
+    Route::get('profile/me', [UserAuthController::class, 'profileMe']);
     Route::post('refresh', [UserAuthController::class, 'refresh']);
 
     Route::delete('/delete/user', [UserController::class, 'deleteUser']);
@@ -101,11 +102,18 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         Route::get('post', 'whoToFollow');
         Route::get('get', 'index');
         Route::get('following', 'following');
+        // Route::get('remove/{id}', 'remove');
     });
 
     // All Bookmarks
     Route::controller(BookmarkController::class)->prefix('bookmarks')->group(function () {
         Route::post('store', 'store');
+        Route::get('get', 'index');
+    });
+
+
+    // All Post Tags
+    Route::controller(TagsController::class)->prefix('tags')->group(function () {
         Route::get('get', 'index');
     });
 

@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 class NotificationController extends Controller
 {
     use apiresponse;
+
     protected $firebaseService;
 
     public function __construct(FirebaseService $firebaseService)
@@ -35,9 +36,11 @@ class NotificationController extends Controller
                 'notifications_enabled' => $request->notifications_enabled ?? true
             ]
         );
+
         return $this->success($data, 'FCM token saved successfully', 200);
     }
 
+    // Send notification to FCM tokens
     public function sendNotification(Request $request)
     {
         $request->validate([
@@ -48,8 +51,8 @@ class NotificationController extends Controller
 
         $tokens = FcmToken::where('notifications_enabled', true)->pluck('token')->toArray();
 
-        if (count($tokens) > 0) {
-            app(FirebaseService::class)->sendNotification($request->title, $request->body, $tokens);
+        if (!empty($tokens)) {
+            $this->firebaseService->sendNotification($request->title, $request->body, $tokens);
         }
 
         Notification::create([
@@ -61,12 +64,14 @@ class NotificationController extends Controller
         return $this->success([], 'Notification sent successfully', 200);
     }
 
+    // Get notifications for a user
     public function getUserNotifications($user_id)
     {
         $notifications = Notification::where('user_id', $user_id)->orderBy('created_at', 'desc')->get();
-        return $this->success($notifications, 'Data Fetch successfully', 200);
+        return $this->success($notifications, 'Data fetched successfully', 200);
     }
 
+    // Enable or disable user notifications
     public function toggleNotifications(Request $request)
     {
         $request->validate([
@@ -81,4 +86,6 @@ class NotificationController extends Controller
         return response()->json(['message' => 'Notification settings updated']);
     }
 
+
+    
 }

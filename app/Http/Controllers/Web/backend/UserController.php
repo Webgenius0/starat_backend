@@ -62,6 +62,7 @@ class UserController extends Controller
         $user->birthday = $data['birth_day'];
         $user->username = $data['username'];
         $user->email = $data['email'];
+        $user->email_verified_at = now();
         $user->password = Hash::make($data['password']); // Make sure password is hashed
 
         $user->save();

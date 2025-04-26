@@ -22,7 +22,7 @@ class UserMiddleware
         if ($user->is_admin == true) {
             return $this->error([], 'You are not authorized to access this route.', 401);
         }
-        if ($user->is_varified == false) {
+        if (is_null($user->email_verified_at)) {
             return $this->error([], 'This account not verified', 401);
         }
 
