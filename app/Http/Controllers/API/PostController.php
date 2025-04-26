@@ -34,10 +34,10 @@ class PostController extends Controller
                 $q->where('user_id', $user_id);
             }])
             ->latest()
-            ->paginate(5);
+            ->get();
 
         // Add bookmark status
-        $posts->getCollection()->transform(function ($post) {
+        $posts->transform(function ($post) {
             $post->is_bookmarked = $post->bookmarks->isNotEmpty();
             $post->is_repost = $post->repost->isNotEmpty();
             $post->is_likes = $post->likes->isNotEmpty();
@@ -46,7 +46,7 @@ class PostController extends Controller
             unset($post->likes);
             return $post;
         });
-        return $this->success( $posts, 'Comment fetch successfully!', 200);
+        return $this->success($posts, 'Comment fetch successfully!', 200);
     }
     public function store(Request $request)
     {
@@ -173,5 +173,36 @@ class PostController extends Controller
         return $this->success([
             'posts' => $posts,
         ], 'Data fetched successfully!', 200);
+    }
+
+
+    public function highlight(Request $request)
+    {
+        $user_id = auth()->user()->id;
+        if ($request->user_id) {
+            $user_id = $request->user_id;
+        }
+        $mentions = Mention::where('mentioned_id', $user_id)->get()->pluck('post_id');
+        // Get paginated posts
+        $posts = Post::whereIn('id', $mentions)
+            ->with(['user', 'tags'])
+            ->withCount(['likes', 'comments', 'repost'])
+            ->with(['bookmarks' => function ($q) use ($user_id) {
+                $q->where('user_id', $user_id);
+            }])
+            ->latest()
+            ->get();
+
+        // Add bookmark status
+        $posts->transform(function ($post) {
+            $post->is_bookmarked = $post->bookmarks->isNotEmpty();
+            $post->is_repost = $post->repost->isNotEmpty();
+            $post->is_likes = $post->likes->isNotEmpty();
+            unset($post->repost);
+            unset($post->bookmarks);
+            unset($post->likes);
+            return $post;
+        });
+        return $this->success($posts, 'Successfully!', 200);
     }
 }
