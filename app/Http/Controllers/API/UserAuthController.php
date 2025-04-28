@@ -267,7 +267,7 @@ class UserAuthController extends Controller
         }
 
         $user = User::where('email', $request->email)->first();
-        $user-> = now();
+        $user->email_verified_at = now();
         $user->otp = null;
         $user->save();
 
