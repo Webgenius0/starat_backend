@@ -8,10 +8,6 @@ class Post extends Model
 {
     protected $fillable = ['title', 'description', 'user_id', 'file_url'];
 
-    public function getFileUrlAttribute($value)
-    {
-        return $value ? url($value) : null;
-    }
 
     public function tags()
     {
@@ -40,5 +36,10 @@ class Post extends Model
     public function repost()
     {
         return $this->hasMany(Repost::class, 'post_id');
+    }
+
+    public function images()
+    {
+        return $this->hasMany(StoryImage::class,'post_id');
     }
 }

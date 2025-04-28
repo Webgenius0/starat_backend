@@ -6,6 +6,7 @@ use App\Helper\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Models\Reel;
+use App\Models\User;
 use App\Traits\apiresponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -24,7 +25,7 @@ class ReelsController extends Controller
     {
         $authUser = auth()->user();
         if ($request->user_id) {
-            $user_id = $request->user_id;
+            $authUser = User::find($request->user_id);
         }
         // Fetch reels with user only (no need to load their followings)
         $data = $this->reels->where('user_id', $authUser->id)->with('user')
@@ -154,5 +155,21 @@ class ReelsController extends Controller
         $reel->save();
 
         return $this->success($reel, 'Share count updated');
+    }
+
+    public function personal($id)
+    {
+        $data = $this->reels->where('user_id', auth()->user()->id)->get()->pluck('id');
+        // Step 6: Get previous & next user ID
+        $currentIndex = $data->search($id);
+        $nextUserId = ($currentIndex + 1 < $data->count()) ? $data[$currentIndex + 1] : null;
+        $prevUserId = ($currentIndex - 1 >= 0) ? $data[$currentIndex - 1] : null;
+
+        $reel = Reel::find($id);
+        return $this->success([
+            'stories' =>  $reel,
+            'previous_reel_id' => $prevUserId ?? 0,
+            'next_reel_id' => $nextUserId ?? 0,
+        ], 'Successfully!', 200);
     }
 }

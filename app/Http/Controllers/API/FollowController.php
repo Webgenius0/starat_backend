@@ -103,7 +103,7 @@ class FollowController extends Controller
         // Get posts only from followed users and self
         $posts = Post::whereIn('user_id', $followingIds)
             ->where('user_id', '!=', $userId)
-            ->with(['user', 'tags'])
+            ->with(['user', 'tags','images'])
             ->withCount(['likes', 'comments', 'repost'])
             ->with(['bookmarks' => function ($q) use ($userId) {
                 $q->where('user_id', $userId);

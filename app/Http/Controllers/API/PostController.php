@@ -9,6 +9,7 @@ use App\Models\Follow;
 use App\Models\Mention;
 use App\Models\Post;
 use App\Models\Reel;
+use App\Models\StoryImage;
 use App\Models\Tag;
 use App\Models\User;
 use App\Notifications\Notify;
@@ -28,7 +29,7 @@ class PostController extends Controller
         }
         // Get paginated posts
         $posts = Post::where('user_id', $user_id)
-            ->with(['user', 'tags'])
+            ->with(['user', 'tags', 'images'])
             ->withCount(['likes', 'comments', 'repost'])
             ->with(['bookmarks' => function ($q) use ($user_id) {
                 $q->where('user_id', $user_id);
@@ -51,10 +52,12 @@ class PostController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'title' => 'nullable|string',  // Title is no longer required
-            'description' => 'nullable|string',  // Description is optional but can be provided
-            'image' => 'nullable|image',  // Image is optional but can be provided
+            'title' => 'nullable|string',
+            'description' => 'nullable|string',
+            'image' => 'nullable|array',
+            'image.*' => 'image',  // Each file in the array must be an image
         ]);
+
 
         // Check if validation fails
         if ($validator->fails()) {
@@ -69,9 +72,16 @@ class PostController extends Controller
         $user = auth()->user();
 
         // Upload the image (only if image is provided)
-        $image_url = null;
+        // $image_url = null;
+        // if ($request->hasFile('image')) {
+        //     $image_url = Helper::uploadImage($request->image, 'post');
+        // }
+        $image_urls = [];
         if ($request->hasFile('image')) {
-            $image_url = Helper::uploadImage($request->image, 'post');
+            foreach ($request->file('image') as $imageFile) {
+                $uploadedUrl = Helper::uploadImage($imageFile, 'story'); // change 'post' to 'story' if needed
+                $image_urls[] = $uploadedUrl;
+            }
         }
 
         // Create the post (title, description, and image_url are optional)
@@ -79,8 +89,14 @@ class PostController extends Controller
             'user_id' => $user->id,
             'title' => $request->title,
             'description' => $request->description,
-            'file_url' => $image_url,
         ]);
+
+        foreach ($image_urls as $url) {
+            StoryImage::create([
+                'post_id' => $post->id,
+                'file_url' => $url,
+            ]);
+        }
 
         // Extract hashtags from description if it exists
         preg_match_all('/#(\w+)/', $request->description, $matches);
@@ -140,7 +156,7 @@ class PostController extends Controller
         // Get paginated posts
         $posts = Post::whereNotIn('user_id', $followingIds)
             ->where('user_id', '!=', $userId)
-            ->with(['user', 'tags'])
+            ->with(['user', 'tags','images'])
             ->withCount(['likes', 'comments', 'repost'])
             ->with(['bookmarks' => function ($q) use ($userId) {
                 $q->where('user_id', $userId);

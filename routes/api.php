@@ -126,6 +126,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         Route::get('/reels/{slug}', 'showBySlug');
         Route::get('timeline', 'timeline');
         Route::post('count', 'shareCount');
+        Route::get('personal/{id}', 'personal');
     });
 
     // All story route

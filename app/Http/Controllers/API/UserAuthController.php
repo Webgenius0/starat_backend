@@ -267,7 +267,7 @@ class UserAuthController extends Controller
         }
 
         $user = User::where('email', $request->email)->first();
-        $user->is_varified = now();
+        $user-> = now();
         $user->otp = null;
         $user->save();
 
