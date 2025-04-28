@@ -62,10 +62,6 @@ class WebhookController extends Controller
         if ($payment) {
             $payment->status = 'success';
             $payment->save();
-
-
-            $boost->status = 'running';
-            $payment->save();
         } else {
             Log::warning('Payment not found', ['payment_id' => $session->metadata->payment_id]);
         }
