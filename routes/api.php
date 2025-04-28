@@ -16,10 +16,12 @@ use App\Http\Controllers\API\RemainderController;
 use App\Http\Controllers\API\ReportUserController;
 use App\Http\Controllers\API\SocialmediaController;
 use App\Http\Controllers\API\StoryController;
+use App\Http\Controllers\API\StripeController;
 use App\Http\Controllers\API\TagsController;
 use App\Http\Controllers\API\UserAuthController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\VideoUploadController;
+use App\Http\Controllers\API\WebhookController;
 use App\Http\Controllers\API\WishlistController;
 use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\RepostController;
@@ -161,6 +163,15 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         Route::post('get', 'index');
     });
 
+    Route::controller(StripeController::class)->prefix('payment')->group(function () {
+        Route::post('create', 'checkout');
+    });
+
+    Route::get('/checkout/success', [StripeController::class, 'successs'])->name('checkout.success');
+
+// Route for canceled payment
+Route::get('/checkout/cancel', [StripeController::class, 'cancel'])->name('checkout.cancel');
+
 
 
     // Get Notifications
@@ -190,3 +201,5 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
 Route::post('/save-fcm-token', [NotificationController::class, 'storeFcmToken']);
 Route::post('/send-notification', [NotificationController::class, 'sendNotification']);
 Route::get('/notifications/{user_id}', [NotificationController::class, 'getUserNotifications']);
+
+Route::post('stripe/webhook', [WebhookController::class, 'handle']);
