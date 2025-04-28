@@ -258,21 +258,39 @@ class UserAuthController extends Controller
 
     public function registerCheckOTP(Request $request)
     {
+        // Validate the request inputs
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'otp' => 'required|digits:6',
         ]);
+
         if ($validator->fails()) {
-            return $this->error([], $validator->errors()->first(), 422);
+            return $this->error([], $validator->errors()->all(), 422); // Returning all validation errors
         }
 
+        // Check if the user exists
         $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return $this->error([], 'User not found', 404); // If user doesn't exist
+        }
+
+        // Verify the OTP before updating the email_verified_at
+        if ($user->otp !== $request->otp) {
+            return $this->error([], 'Invalid OTP', 400); // OTP mismatch
+        }
+
+        // Mark the email as verified and reset OTP
         $user->email_verified_at = now();
         $user->otp = null;
         $user->save();
 
-        return $this->success([], 'OTP validated successfully. Your account is now verified.', 200);
+        // Generate a new JWT token
+        $token = JWTAuth::fromUser($user); // Use fromUser to create the token directly from the user instance
+
+        return $this->success($token, 'OTP validated successfully. Your account is now verified.', 200);
     }
+
 
     /**
      * Log out the user (Invalidate the token).

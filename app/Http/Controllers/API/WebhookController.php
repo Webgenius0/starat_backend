@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Stripe\Stripe;
 use Stripe\Webhook;
 
+
 class WebhookController extends Controller
 {
     public function __construct()
@@ -59,6 +60,7 @@ class WebhookController extends Controller
         $payment = Payment::find($session->metadata->payment_id);
         $user = $session->metadata->user_id;
         $boost = PostBoost::find($session->metadata->boost_id);
+        Log::info($boost);
         if ($payment) {
             $payment->status = 'success';
             $payment->save();
@@ -68,7 +70,7 @@ class WebhookController extends Controller
 
         if ($boost) {
             $boost->status = 'running';
-            $payment->save();
+            $boost->save();
         } else {
             Log::warning('Boost not found', ['boost_id' => $session->metadata->boost_id]);
         }
