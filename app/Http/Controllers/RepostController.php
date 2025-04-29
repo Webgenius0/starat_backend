@@ -22,7 +22,7 @@ class RepostController extends Controller
         $reposts = Repost::where('user_id', $user_id)->get()->pluck('post_id');
         // Get paginated posts
         $posts = Post::whereIn('id', $reposts)
-            ->with(['user', 'tags'])
+            ->with(['user', 'tags','images'])
             ->withCount(['likes', 'comments', 'repost'])
             ->with(['bookmarks' => function ($q) use ($user_id) {
                 $q->where('user_id', $user_id);
