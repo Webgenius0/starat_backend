@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class StoryImage extends Model
 {
@@ -10,7 +11,7 @@ class StoryImage extends Model
 
     public function getFileUrlAttribute($value)
     {
-        return $value ? url($value) : null;
+        return $value ? Storage::disk('s3')->temporaryUrl($value, now()->addMinutes(30)) : null;
     }
 
     public function post()

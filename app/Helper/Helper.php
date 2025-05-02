@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification as FirebaseNotification;
@@ -61,6 +62,18 @@ class Helper
         return $path;
     }
 
-    
-
+    public static function uploadToS3($file, $directory = 'uploads')
+    {
+        try {
+            $filename = $directory . '/' . time() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs($directory, $filename, [
+                'disk' => 's3',
+                'visibility' => 'public',
+            ]);
+            return Storage::disk('s3')->url($path);
+        } catch (\Exception $e) {
+            // Log the error or handle it as needed
+            return null;
+        }
+    }
 }

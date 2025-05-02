@@ -66,6 +66,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         Route::get('foryou', 'forYou');
         Route::get('get', 'index');
         Route::get('highlight', 'highlight');
+        Route::get('delete/{id}', 'destroy');
     });
 
     // All hobby route
