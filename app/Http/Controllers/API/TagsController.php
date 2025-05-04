@@ -47,7 +47,7 @@ class TagsController extends Controller
             ->when($keyword, function ($query, $keyword) {
                 $query->where('name', 'like', '%' . $keyword . '%');
             })
-            ->select('id', 'username','name')
+            ->select('id', 'username','name','avatar')
             ->get();
 
         return $this->success($suggestedUsers, 'Suggestions fetched successfully!', 200);

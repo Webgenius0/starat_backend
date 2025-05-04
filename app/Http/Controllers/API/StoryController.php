@@ -97,7 +97,7 @@ class StoryController extends Controller
         $user = auth()->user();
 
         if ($request->media) {
-            $media = Helper::uploadImage($request->media, 'story');
+            $media = Helper::s3upload('story', $request->media);
         }
         $slug = Str::slug($user->name . '-' . time());
         $story = Story::create([
