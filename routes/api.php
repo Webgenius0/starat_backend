@@ -63,6 +63,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
     // All post route
     Route::controller(PostController::class)->prefix('post')->group(function () {
         Route::post('store', 'store');
+        Route::get('mention/{username}', 'mention');
         Route::get('foryou', 'forYou');
         Route::get('get', 'index');
         Route::get('highlight', 'highlight');
