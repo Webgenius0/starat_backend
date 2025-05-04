@@ -212,29 +212,20 @@ class PostController extends Controller
     public function mention($username)
     {
         try {
-            $user = User::where('username',$username)->first();
-            if(!$user)
-            {
-                return $this->error([],'User not found!');
+            $user = User::where('username', $username)->first();
+            if (!$user) {
+                return $this->error([], 'User not found!');
             }
 
             $response = [
                 'id' => $user->id,
-                'name' => $user->name,
-                'avatar' => $user->avatar ?? null,
-                'cover_image' => $user->cover_image ?? null,
-                'username' => $user->username,
-                'joined' => 'Joined ' . $user->created_at->format('M Y'),
-                'follower' => $user->followers()->count(),
-                'following' => $user->following()->count(),
-                'post' => $user->posts()->count(),
             ];
 
             return $this->success([
                 'user' => $response,
             ], 'User retrieved successfully', 200);
         } catch (\Throwable $th) {
-            //throw $th;
+            return $this->error('User not found', 404);
         }
     }
 
