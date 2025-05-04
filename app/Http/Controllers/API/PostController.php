@@ -209,10 +209,11 @@ class PostController extends Controller
         ], 'Data fetched successfully!', 200);
     }
 
-    public function mention($username)
+    public function mention(Request $request)
     {
+
         try {
-            $user = User::where('username', $username)->first();
+            $user = User::where('username', $request->username)->first();
             if (!$user) {
                 return $this->error([], 'User not found!');
             }
