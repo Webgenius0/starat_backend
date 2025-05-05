@@ -32,7 +32,7 @@ class PostController extends Controller
 
                     // Loop through all related images (assuming the relation is called 'images')
                     foreach ($data->images as $image) {
-                        $url = privateAsset($image); // Adjust if your path field has a different name
+                        $url = Storage::disk('s3')->temporaryUrl($image, now()->addMinutes(30)); // Adjust if your path field has a different name
                         $imagesHtml .= '<img src="' . $url . '" alt="Image" width="80" height="80" style="margin-right: 5px;">';
                     }
 
