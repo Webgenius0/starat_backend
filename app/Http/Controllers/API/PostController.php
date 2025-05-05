@@ -261,15 +261,15 @@ class PostController extends Controller
         return $this->success($posts, 'Successfully!', 200);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request)
     {
-        $error = $this->check($id);
+        $error = $this->check($request->post_id);
 
         if ($error) {
             return $error;
         }
 
-        $post = $this->posts->find($id);
+        $post = $this->posts->find($request->post_id);
 
         // Delete all related images from S3
         foreach ($post->images as $image) {

@@ -55,7 +55,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
     Route::post('logout', [UserAuthController::class, 'logout']);
     Route::get('profile/me', [UserAuthController::class, 'profileMe']);
     Route::post('refresh', [UserAuthController::class, 'refresh']);
-    Route::post('information', [UserAuthController::class, 'information']);
+    Route::get('information', [UserAuthController::class, 'information']);
 
     Route::delete('/delete/user', [UserController::class, 'deleteUser']);
 
@@ -69,7 +69,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         Route::get('foryou', 'forYou');
         Route::get('get', 'index');
         Route::get('highlight', 'highlight');
-        Route::get('delete/{id}', 'destroy');
+        Route::post('delete', 'destroy');
     });
 
     // All hobby route
@@ -133,7 +133,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         Route::get('timeline', 'timeline');
         Route::post('count', 'shareCount');
         Route::get('personal/{id}', 'personal');
-        Route::get('delete/{id}', 'destroy');
+        Route::post('delete', 'destroy');
     });
 
     // All story route

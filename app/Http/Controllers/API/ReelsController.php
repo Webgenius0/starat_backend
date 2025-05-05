@@ -175,15 +175,15 @@ class ReelsController extends Controller
     }
 
 
-    public function destroy($id)
+    public function destroy(Request $request)
     {
-        $error = $this->check($id);
+        $error = $this->check($request->reel_id);
 
         if ($error) {
             return $error;
         }
 
-        $reel = $this->reels->find($id);
+        $reel = $this->reels->find($request->reel_id);
 
         if (!$reel) {
             return response()->json(['message' => 'Reel not found'], 404);
