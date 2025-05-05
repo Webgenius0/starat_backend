@@ -35,7 +35,7 @@ Route::controller(UserAuthController::class)->group(function () {
     Route::post('login', 'login');
     Route::post('register', 'register');
     Route::post('register-verify-otp', 'registerCheckOTP');
-    Route::post('information', 'information');
+    
 
     Route::post('logout', 'logout');
 
@@ -55,6 +55,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
     Route::post('logout', [UserAuthController::class, 'logout']);
     Route::get('profile/me', [UserAuthController::class, 'profileMe']);
     Route::post('refresh', [UserAuthController::class, 'refresh']);
+    Route::post('information', [UserAuthController::class, 'information']);
 
     Route::delete('/delete/user', [UserController::class, 'deleteUser']);
 
