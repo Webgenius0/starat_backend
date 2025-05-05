@@ -131,6 +131,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
         Route::get('timeline', 'timeline');
         Route::post('count', 'shareCount');
         Route::get('personal/{id}', 'personal');
+        Route::get('delete/{id}', 'destroy');
     });
 
     // All story route

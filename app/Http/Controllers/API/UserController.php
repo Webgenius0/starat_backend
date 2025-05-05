@@ -23,73 +23,66 @@ class UserController extends Controller
      */
     public function updateUserInfo(Request $request)
     {
-        // Validate the incoming request data
         $validation = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:users,username,' . Auth::id()],
-            'location' => ['nullable', 'string', 'max:50'],
-            'website' => ['nullable', 'string', 'max:50'],
-            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'], // Single profile image
-            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'], // Single cover image
-            'phone' => ['nullable', 'string'],
-            'bio' => ['nullable', 'string'],
+            'name' => ['sometimes', 'string', 'max:255'],
+            'username' => ['sometimes', 'string', 'max:255', 'unique:users,username,' . Auth::id()],
+            'location' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'website' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'cover_image' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'phone' => ['sometimes', 'nullable', 'string'],
+            'bio' => ['sometimes', 'nullable', 'string'],
         ]);
 
-        // If validation fails, return errors
         if ($validation->fails()) {
             return $this->error([], $validation->errors(), 422);
         }
 
-        // Start a database transaction to ensure atomicity
         DB::beginTransaction();
         $user = Auth::user();
 
         try {
-            // Update the user's general information (name, username, location, etc.)
+            // Only update the fields that are actually sent in the request
             $user->update($request->only([
-                'name',  // 'name' is the username
-                'username',  // The actual username field
+                'name',
+                'username',
                 'location',
                 'website',
                 'phone',
                 'bio',
             ]));
 
-            // Handle the profile image upload (only one image)
             if ($request->hasFile('avatar')) {
                 $filePath = Helper::uploadImage($request->file('avatar'), 'users', $user->avatar ?? null);
                 $user->avatar = $filePath;
-                $user->save();
             }
 
-            // Handle the cover image upload (only one image)
             if ($request->hasFile('cover_image')) {
                 $coverImagePath = Helper::uploadImage($request->file('cover_image'), 'users/covers', $user->cover_image);
                 $user->cover_image = $coverImagePath;
-                $user->save();
             }
 
-            // Commit the transaction if everything is successful
+            $user->save();
             DB::commit();
 
-            // Return success response with updated user data
             return $this->success([
                 'user' => [
+                    'name' => $user->name,
                     'username' => $user->username,
                     'location' => $user->location,
                     'website' => $user->website,
-                    'avatar' => $user->avatar, // The user's profile image
-                    'cover_image' => $user->cover_image, // The user's cover image
+                    'avatar' => $user->avatar,
+                    'cover_image' => $user->cover_image,
                     'phone' => $user->phone,
                     'bio' => $user->bio,
                 ],
             ], 'User updated successfully', 200);
         } catch (\Exception $e) {
-            // Rollback the transaction if something goes wrong
             DB::rollBack();
             return $this->error([], $e->getMessage(), 400);
         }
     }
+
 
 
 

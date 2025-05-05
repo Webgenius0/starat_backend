@@ -3,10 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Reel extends Model
 {
-    protected $fillable = ['title', 'description', 'user_id', 'file_url', 'duration', 'slug','share'];
+    protected $fillable = ['title', 'description', 'user_id', 'file_url', 'duration', 'slug', 'share'];
     public function comments()
     {
         return $this->morphMany(Comment::class, 'commentable');
@@ -14,7 +15,7 @@ class Reel extends Model
 
     public function getFileUrlAttribute($value)
     {
-        return $value ? url($value) : null;
+        return $value ? Storage::disk('s3')->temporaryUrl($value, now()->addMinutes(30)) : null;
     }
 
     public function getSlugAttribute($value)

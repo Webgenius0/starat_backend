@@ -9,6 +9,7 @@ use App\Models\Reel;
 use App\Models\User;
 use App\Traits\apiresponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -113,7 +114,7 @@ class ReelsController extends Controller
         $slug = Str::slug($user->name . '-' . time());
         // Store the uploaded video file
         if ($request->hasFile('reel')) {
-            $reel = Helper::uploadImage($request->file('reel'), 'reels');
+            $reel = Helper::s3upload('reels', $request->file('reel'));
             $post = new $this->reels();
             $post->user_id = $user->id;
             $post->title = $request->input('title');
@@ -171,5 +172,51 @@ class ReelsController extends Controller
             'previous_reel_id' => $prevUserId ?? 0,
             'next_reel_id' => $nextUserId ?? 0,
         ], 'Successfully!', 200);
+    }
+
+
+    public function destroy($id)
+    {
+        $error = $this->check($id);
+
+        if ($error) {
+            return $error;
+        }
+
+        $reel = $this->reels->find($id);
+
+        if (!$reel) {
+            return response()->json(['message' => 'Reel not found'], 404);
+        }
+
+        // Delete reel video from S3
+        if ($reel->file_url) {
+            // Extract S3 relative path if video_url is a full URL
+            $path = parse_url($reel->video_url, PHP_URL_PATH);
+            $path = ltrim($path, '/'); // remove leading slash
+
+            if (Storage::disk('s3')->exists($path)) {
+                Storage::disk('s3')->delete($path);
+            }
+        }
+        $reel->delete();
+
+        return $this->success([], 'Reel Deleted Successfully!', 200);
+    }
+
+
+    private function check($id)
+    {
+        $reels = $this->reels->find($id);
+
+        if (!$reels) {
+            return $this->error([], 'Post Not Found!');
+        }
+
+        if ($reels->user_id != auth()->user()->id) {
+            return $this->error([], 'You are not authorized to delete this post.');
+        }
+
+        return null;
     }
 }
