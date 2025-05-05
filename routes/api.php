@@ -35,6 +35,7 @@ Route::controller(UserAuthController::class)->group(function () {
     Route::post('login', 'login');
     Route::post('register', 'register');
     Route::post('register-verify-otp', 'registerCheckOTP');
+    Route::post('information', 'information');
 
     Route::post('logout', 'logout');
 

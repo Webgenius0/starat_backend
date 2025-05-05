@@ -192,7 +192,7 @@ class ReelsController extends Controller
         // Delete reel video from S3
         if ($reel->file_url) {
             // Extract S3 relative path if video_url is a full URL
-            $path = parse_url($reel->video_url, PHP_URL_PATH);
+            $path = parse_url($reel->file_url, PHP_URL_PATH);
             $path = ltrim($path, '/'); // remove leading slash
 
             if (Storage::disk('s3')->exists($path)) {

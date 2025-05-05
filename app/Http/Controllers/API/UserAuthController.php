@@ -129,6 +129,13 @@ class UserAuthController extends Controller
         ], 'User logged in successfully.', 200);
     }
 
+    public function information()
+    {
+        $user = auth()->user();
+
+        return $this->success($user,'Data Fetch Successfully!',200);
+    }
+
 
     public function forgetPassword(Request $request)
     {
