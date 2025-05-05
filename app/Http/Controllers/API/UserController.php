@@ -28,8 +28,8 @@ class UserController extends Controller
             'username' => ['sometimes', 'string', 'max:255', 'unique:users,username,' . Auth::id()],
             'location' => ['sometimes', 'nullable', 'string', 'max:50'],
             'website' => ['sometimes', 'nullable', 'string', 'max:50'],
-            'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            'cover_image' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'cover_image' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'phone' => ['sometimes', 'nullable', 'string'],
             'bio' => ['sometimes', 'nullable', 'string'],
         ]);

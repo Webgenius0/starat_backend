@@ -4,6 +4,7 @@ use App\Http\Controllers\Web\backend\admin\FAQController;
 use App\Http\Controllers\Web\backend\CategoryController;
 use App\Http\Controllers\Web\backend\DashboardController;
 use App\Http\Controllers\Web\backend\HobbyController;
+use App\Http\Controllers\Web\backend\PostController;
 use App\Http\Controllers\Web\backend\PremissionController;
 use App\Http\Controllers\Web\backend\ProductController;
 use App\Http\Controllers\Web\backend\RoleController;
@@ -86,6 +87,14 @@ Route::controller(DynamicPagesController::class)->group(function () {
     Route::delete('/dynamicpages/destroy/{id}', 'destroy')->name('dynamicpages.destroy');
     Route::post('/dynamicpages/status/{id}', 'changeStatus')->name('dynamicpages.status');
     Route::post('/dynamicpages/bulk-delete', 'bulkDelete')->name('dynamicpages.bulk-delete');
+});
+
+//Post Pages Route
+Route::controller(PostController::class)->group(function () {
+    Route::get('/post', 'index')->name('post.index');
+    Route::delete('/post/destroy/{id}', 'destroy')->name('post.destroy');
+    Route::post('/post/status/{id}', 'changeStatus')->name('post.status');
+    Route::post('/post/bulk-delete', 'bulkDelete')->name('post.bulk-delete');
 });
 
 Route::prefix('permissions')->controller(PremissionController::class)->group(function () {

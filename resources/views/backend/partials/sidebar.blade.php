@@ -65,6 +65,15 @@
                 </a>
             </li>
 
+            <li class="nav-item {{ request()->routeIs('post.index') ? 'active' : '' }}">
+                <a class="d-flex align-items-center" href="{{ route('post.index') }}">
+                    <i data-feather="help-circle"></i>
+                    <span class="menu-title text-truncate" data-i18n="ag-grid">
+                        All Post
+                    </span>
+                </a>
+            </li>
+
             <li class="nav-item {{ request()->routeIs('faq.index') ? 'active' : '' }}">
                 <a class="d-flex align-items-center" href="{{ route('faq.index') }}">
                     <i data-feather="help-circle"></i>
