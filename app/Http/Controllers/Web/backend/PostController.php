@@ -30,13 +30,18 @@ class PostController extends Controller
                 ->editColumn('image', function ($data) {
                     $imagesHtml = '';
 
-                    // Loop through all related images (assuming the relation is called 'images')
-                    foreach ($data->images as $image) {
-                        $url = Storage::disk('s3')->temporaryUrl($image, now()->addMinutes(30)); // Adjust if your path field has a different name
-                        $imagesHtml .= '<img src="' . $url . '" alt="Image" width="80" height="80" style="margin-right: 5px;">';
+                    if ($data->images && $data->images->isNotEmpty()) {
+                        $imagesHtml .= '<div style="display: flex; flex-wrap: wrap; gap: 5px;">';
+
+                        foreach ($data->images as $image) {
+                            $url = $image->file_url;
+                            $imagesHtml .= '<img src="' . $url . '" alt="Image" width="80" height="80" style="object-fit: cover;">';
+                        }
+
+                        $imagesHtml .= '</div>';
                     }
 
-                    return $imagesHtml;
+                    return $imagesHtml ?: 'No images';
                 })
                 ->editColumn('status', function ($data) {
                     return '<div class="form-check form-switch mb-2"><input type="checkbox" class="form-check-input"
