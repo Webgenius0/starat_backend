@@ -11,6 +11,7 @@ use App\Http\Controllers\API\LikeController;
 use App\Http\Controllers\API\MessagingController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\PostController;
+use App\Http\Controllers\API\RecentController;
 use App\Http\Controllers\API\ReelsController;
 use App\Http\Controllers\API\RemainderController;
 use App\Http\Controllers\API\ReportUserController;
@@ -35,7 +36,7 @@ Route::controller(UserAuthController::class)->group(function () {
     Route::post('login', 'login');
     Route::post('register', 'register');
     Route::post('register-verify-otp', 'registerCheckOTP');
-    
+
 
     Route::post('logout', 'logout');
 
@@ -166,6 +167,15 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
     // All Filter 
     Route::controller(FilterController::class)->prefix('search')->group(function () {
         Route::post('get', 'index');
+        Route::get('tranding', 'tranding');
+    });
+
+    // All recent
+    Route::controller(RecentController::class)->prefix('recent')->group(function () {
+        Route::get('/',  'index');
+        Route::post('/',  'store');
+        Route::delete('/{id}',  'destroy');
+        Route::delete('/',  'clearAll');
     });
 
     Route::controller(StripeController::class)->prefix('payment')->group(function () {
@@ -174,8 +184,8 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
 
     Route::get('/checkout/success', [StripeController::class, 'successs'])->name('checkout.success');
 
-// Route for canceled payment
-Route::get('/checkout/cancel', [StripeController::class, 'cancel'])->name('checkout.cancel');
+    // Route for canceled payment
+    Route::get('/checkout/cancel', [StripeController::class, 'cancel'])->name('checkout.cancel');
 
 
 
