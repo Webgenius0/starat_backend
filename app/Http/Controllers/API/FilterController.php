@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Post;
 use App\Models\Tag;
 use App\Models\User;
 use App\Traits\apiresponse;
@@ -14,13 +15,28 @@ class FilterController extends Controller
     use apiresponse;
     public function index(Request $request)
     {
+        $userId = auth()->user()->id;
         $search = $request->input('search');
         $users = User::where('name', 'LIKE', "%{$search}%")->get();
-        $tags = Tag::where('text', 'LIKE', "%{$search}%")->with(['post'])->get();
+        $tags = Tag::where('text', 'LIKE', "%{$search}%")->with('post')->get();
+
+        // Get unique post IDs from the matching tags
+        $postIds = $tags->pluck('post.id')->filter()->unique()->values();
+
+        // Get matching posts with all required relationships
+        $posts = Post::whereIn('id', $postIds)
+            ->where('user_id', '!=', $userId)
+            ->with(['user', 'tags', 'images'])
+            ->withCount(['likes', 'comments', 'repost'])
+            ->with(['bookmarks' => function ($q) use ($userId) {
+                $q->where('user_id', $userId);
+            }])
+            ->latest()
+            ->get();
 
         $data = [
             'users' => $users,
-            'tags' => $tags,
+            'tags' => $posts,
         ];
         return $this->success($data, 'Data fetched successfully!', 200);
     }
