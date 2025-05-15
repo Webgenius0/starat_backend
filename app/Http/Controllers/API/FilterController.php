@@ -20,12 +20,12 @@ class FilterController extends Controller
         $users = User::where('name', 'LIKE', "%{$search}%")->get();
         $tags = Tag::where('text', 'LIKE', "%{$search}%")->with('post')->get();
 
+
         // Get unique post IDs from the matching tags
         $postIds = $tags->pluck('post.id')->filter()->unique()->values();
 
         // Get matching posts with all required relationships
         $posts = Post::whereIn('id', $postIds)
-            ->where('user_id', '!=', $userId)
             ->with(['user', 'tags', 'images'])
             ->withCount(['likes', 'comments', 'repost'])
             ->with(['bookmarks' => function ($q) use ($userId) {
@@ -37,6 +37,18 @@ class FilterController extends Controller
         $data = [
             'users' => $users,
             'tags' => $posts,
+        ];
+        return $this->success($data, 'Data fetched successfully!', 200);
+    }
+
+    public function suggest(Request $request)
+    {
+        $search = $request->input('search');
+        $users = User::where('name', 'LIKE', "%{$search}%")->select('id', 'name', 'base', 'avatar', 'username')->get();
+        $tags = Tag::where('text', 'LIKE', "%{$search}%")->get();
+        $data = [
+            'users' => $users,
+            'trending' => $tags,
         ];
         return $this->success($data, 'Data fetched successfully!', 200);
     }

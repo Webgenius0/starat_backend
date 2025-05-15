@@ -168,6 +168,7 @@ Route::group(['middleware' => ['jwt.verify', 'user']], function () {
     Route::controller(FilterController::class)->prefix('search')->group(function () {
         Route::post('get', 'index');
         Route::get('tranding', 'tranding');
+        Route::post('suggest', 'suggest');
     });
 
     // All recent
