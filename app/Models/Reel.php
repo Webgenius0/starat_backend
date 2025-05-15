@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
+
 class Reel extends Model
 {
     protected $fillable = ['title', 'description', 'user_id', 'file_url', 'duration', 'slug', 'share'];

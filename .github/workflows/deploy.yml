@@ -14,6 +14,6 @@ jobs:
       - name: FTP-Deploy-Action
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
         with:
-          server: ftp.softvencefsd.xyz
-          username: starat@starat.softvencefsd.xyz
-          password: "%UmEyrM*R[7S" 
+          server: 31.220.72.120
+          username: ftpuser
+          password: "aYu1nUaNtjCZRR2HNoG1" 
