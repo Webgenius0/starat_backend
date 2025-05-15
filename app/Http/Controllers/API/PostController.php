@@ -180,7 +180,7 @@ class PostController extends Controller
                 $q->where('user_id', $userId);
             }])
             ->latest()
-            ->paginate(5);
+            ->paginate(6);
 
         // Add bookmark status
         $posts->getCollection()->transform(function ($post) {
