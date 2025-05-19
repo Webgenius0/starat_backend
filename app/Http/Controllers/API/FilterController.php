@@ -53,7 +53,7 @@ class FilterController extends Controller
         return $this->success($data, 'Data fetched successfully!', 200);
     }
 
-    public function tranding()
+    public function trending()
     {
         $most_related = DB::table('tags')
             ->select('text', DB::raw('COUNT(*) as usage_count'))
@@ -63,6 +63,17 @@ class FilterController extends Controller
             ->limit(5)
             ->get();
 
-        return $this->success($most_related, 'Data fetched successfully!', 200);
+        $recent = DB::table('recents')
+        ->whereNotNull('term')
+            ->select('term', DB::raw('COUNT(*) as usage_count'))
+            ->groupBy('term')
+            ->orderByDesc('usage_count')
+            ->limit(5)
+            ->get();
+        $data = [
+            'tags' => $most_related,
+            'search' => $recent
+        ];
+        return $this->success($data, 'Data fetched successfully!', 200);
     }
 }
